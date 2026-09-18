@@ -56,11 +56,32 @@ Result body Host already POSTs (`api.JobResultRequest`): **`passed`**, optional 
 
 ## Validation override (plane creates the window; bench consumes `path_b`)
 
-Product sign-off (panopticon#108): the **plane** is the door. Plane operator (`X-Tenant-ID` / portal JWT — not a site `hm_site_…` token, not `POST /jobs`):
+Product sign-off (panopticon#108): the **plane** is the door. Plane operator only — portal tenant-session JWT + marketplace `X-Tenant-ID`. Not a site `hm_site_…` token. Not `POST /jobs`. **Not** `scripts/phase1_soak.sh`.
+
+Create (AGX64-1). `preempt` defaults `true` if omitted. **`suite_id` is not in the body** — the plane picks `path_b` / `thin-v1`.
 
 ```
 POST /api/v1/hypermesh/host-certification/overrides
-     { device_id, preempt? }     # preempt defaults true
+Authorization: Bearer <portal tenant-session JWT>
+X-Tenant-ID: <marketplace tenant>
+{"device_id":"f6124d28-772c-4f1f-8e03-1a7a17724381","preempt":true}
+```
+
+Then:
+
+```
+Host  GET /api/v1/hypermesh/agent/jobs     → kind=path_b  suite_id=thin-v1
+      ./scripts/phase1_soak.sh
+      POST /api/v1/hypermesh/agent/jobs/{job_id}/result
+        { "passed": bool, "image_hash": "…" }
+Plane auto-restore (or POST …/overrides/{id}/restore)
+```
+
+No hand `lease_stop`.
+
+Also:
+
+```
 GET  /api/v1/hypermesh/host-certification/overrides
 GET  /api/v1/hypermesh/host-certification/overrides/{id}
 POST /api/v1/hypermesh/host-certification/overrides/{id}/restore

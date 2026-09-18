@@ -10,12 +10,7 @@ The site must not sell `llama-3.1-8b-q4` until `catalog/agx64.yaml` says `status
 
 One command on AGX64-1 (JetPack host). **Only** Host, after it pulls `kind=path_b` / `suite_id=thin-v1`, should invoke this. Not chat. Not a hand `lease_stop`. See [HOST_JOB.md](HOST_JOB.md).
 
-**Plane door** (panopticon#108 — Product sign-off): the control plane opens the certification window. Operators (portal JWT / `X-Tenant-ID`) use:
-
-- `POST` / `GET` `/api/v1/hypermesh/host-certification/overrides`
-- `POST` `/api/v1/hypermesh/host-certification/overrides/{id}/restore`
-
-The plane does **schedule_hold** → optional preempt (internal `enqueue_lease_stop`) → enqueue existing `path_b` `thin-v1` → **restore**. `scripts/phase1_soak.sh` does **not** call those URLs and does not POST `lease_stop` / `POST /jobs`. A later plane-side helper (portal JWT) may live outside Host; it is not this script.
+**Plane door** (panopticon#108 — Product sign-off): the control plane opens the certification window. Exact Create body (plane operator, **not** this script): see [HOST_JOB.md](HOST_JOB.md). `preempt` defaults `true`; `suite_id` is not in the body (plane picks `path_b` / `thin-v1`). Host then `GET /agent/jobs` → `phase1_soak` → job result → auto-restore. No hand `lease_stop`.
 
 ```bash
 ./scripts/phase1_soak.sh \
@@ -224,7 +219,7 @@ python3 harness/batch_runner.py \
 
 The host agent already owns Path B. Do not invent a second channel. Do not hand-POST `lease_stop` to “make room.”
 
-1. Plane opens the window (`POST /api/v1/hypermesh/host-certification/overrides`) and enqueues existing `kind=path_b` / `suite_id=thin-v1` / `catalog_id=llama-3.1-8b-q4`.
+1. Plane operator opens the window with the Create body in [HOST_JOB.md](HOST_JOB.md) (`device_id` + optional `preempt`; no `suite_id`). Plane enqueues existing `kind=path_b` / `thin-v1`.
 2. Agent pulls that job and runs `scripts/phase1_soak.sh` (or you drop the `out/` tree where the agent reads results).
 3. Agent **POSTs the job result on the existing job-result channel** (`{passed, image_hash?}` plus scorecard/raw refs on disk). Not a new URL. Not a homemade curl to a dashboard. Not the override URL.
 4. CP persists a `path_b_runs` row, emits `hypermesh.cert.path_b.passed.v1` or `failed.v1`, and restores the override (or `POST …/overrides/{id}/restore`).
