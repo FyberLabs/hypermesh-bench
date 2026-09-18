@@ -21,6 +21,17 @@ jobs:
         run: |
           python3 harness/check_scorecard.py --emit-example \
             | python3 harness/check_scorecard.py --schema schemas/scorecard.schema.json
+      - name: Batch-12 pins + Product-2 catalog
+        run: python3 harness/check_catalog.py
+      - name: pull-gguf.sh accepts pinned sha256 (dry-run)
+        run: |
+          ./recipes/gguf/pull-gguf.sh --model-id llama-3.1-8b-q4 --dry-run \
+            | tee /tmp/pull-dry.txt
+          grep -q 'sha256=7b064f5842bf9532c91456deda288a1b672397a54fa729aa665952863033557c' /tmp/pull-dry.txt
+          if ./recipes/gguf/pull-gguf.sh --sha256 TBD --url https://example.invalid/x.gguf --out /tmp/x; then
+            echo "expected unpinned sha256 to fail" >&2
+            exit 1
+          fi
       - name: Stub run_one + batch emit null scorecards
         run: |
           python3 harness/run_one.py \
