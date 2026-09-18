@@ -32,7 +32,7 @@ Options:
   --no-nvpmodel          Do not sudo nvpmodel -m 2
   -h, --help             This help
 
-Host-job env (existing path_b job; do not invent CP APIs):
+Host-job env (run only when Host pulled kind=path_b thin-v1):
   HM_JOB_KIND            Must be path_b (lease_stop is not this entrypoint)
   HM_SUITE_ID            thin-v1 (empty → thin-v1)
   HM_CATALOG_ID          llama-3.1-8b-q4
@@ -43,7 +43,9 @@ Host-job env (existing path_b job; do not invent CP APIs):
   HM_OUT_DIR             Artifact root
   HM_REQUIRE_PATH_B=1    Fail process if Path B is red
   HM_VALIDATION_WINDOW   denied|no_hold|0 → exit 4 (skip). Unset/open → run
-  HM_VALIDATION_DENIED=1 Exit 4. Panopticon owns hold+preempt; we only consume.
+  HM_VALIDATION_DENIED=1 Exit 4. Plane owns hold+preempt+restore
+                         (POST/GET …/host-certification/overrides).
+                         This script does not POST those URLs or lease_stop.
 
 Exit codes:
   0  scorecard written; Path B green (or --stub without --require-path-b)

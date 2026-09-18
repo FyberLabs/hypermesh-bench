@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """Host-job-shaped Phase 1 thin-v1 soak driver for llama-3.1-8b-q4.
 
-Operator / Host path_b entrypoint. Emits scorecard.json + job_result.json
-(passed, image_hash) for the existing job-result channel. Does not POST.
-Does not invent tok/s, watts, or hashes. Unmeasured fields stay null.
+Host path_b entrypoint (run only after Host pulls kind=path_b thin-v1).
+Emits scorecard.json + job_result.json (passed, image_hash) for the
+existing job-result channel. Does not POST the plane override, lease_stop,
+or /jobs. Does not invent tok/s, watts, or hashes. Unmeasured fields stay
+null.
 
 Exit codes:
   0  scorecard written; --path-b green (or stub dry-run without --require-path-b)
