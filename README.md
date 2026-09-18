@@ -26,7 +26,7 @@ Hypermesh Path B certifies a **host class + image + artifact + sustained envelop
 
 The site must not sell a `catalog_id` until `status=certified` with a measured envelope and hashes. `llama-3.1-8b-q4` is `soak_pending`. Every other batch-12 id is `candidate`. See [catalog/README.md](catalog/README.md).
 
-Host soak steps for AGX64-1: **[docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md)**.
+Host soak steps for AGX64-1: **[docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md)**. Automated entrypoint: `./scripts/phase1_soak.sh`. Host `path_b` mapping: **[docs/HOST_JOB.md](docs/HOST_JOB.md)**.
 
 ## Numbers policy
 
@@ -41,7 +41,7 @@ The JetPack/L4T version recorded on the Fyber AGX is the only soak source of tru
 | Phase | Goal |
 |---|---|
 | **0** | Layout, schema, thin-v1 pack, batch-12 manifest, recipe stubs |
-| **1** (this) | Pins + Product-2 catalog + host runbook. Green Path B on Llama 3.1 8B Q4_K_M only — [docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md) |
+| **1** (this) | Pins + catalog + **Host-job-shaped soak entrypoint** for Llama 3.1 8B Q4_K_M — [docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md) |
 | **2** | Run the 12-model batch at 30W; promote catalog rows only after soak |
 | **3** | Optional serving / quality sidecars (not Path B pass/fail) |
 | **4** | Per-host store + portal dashboards (see [docs/DASHBOARDS.md](docs/DASHBOARDS.md)) |
@@ -50,7 +50,17 @@ Harness scripts still emit valid scorecards with null metrics until AGX64-1 meas
 
 ## How to run (AGX / JetPack host — not Alpine)
 
-Follow [docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md) on AGX64-1. Short form:
+Follow [docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md) on AGX64-1. Preferred:
+
+```bash
+./scripts/phase1_soak.sh \
+  --model-id llama-3.1-8b-q4 \
+  --pack packs/thin-v1 \
+  --out "out/$(hostname)-$(date +%Y%m%d)" \
+  --loader gguf
+```
+
+`--stub` dry-run (no GPU) writes a schema-valid scorecard + `job_result.json` with nulls. Manual pieces:
 
 ```bash
 git clone https://github.com/FyberLabs/hypermesh-bench
@@ -67,8 +77,8 @@ sudo nvpmodel -m 2
 # Pin from the batch-12 manifest (refuses TBD)
 ./recipes/gguf/pull-gguf.sh --model-id llama-3.1-8b-q4 --out /var/lib/hypermesh/models/
 
-# Phase 0 stub still writes null scorecards. Phase 1: same entry point, then fill raw files.
-python3 harness/run_one.py \
+# --stub is the CI default. --execute runs llama-bench when the binary exists.
+python3 harness/run_one.py --stub \
   --manifest models/agx64-batch12.yaml \
   --pack packs/thin-v1 \
   --model-id llama-3.1-8b-q4 \
@@ -102,14 +112,16 @@ Dry-run (no download):
 ./recipes/gguf/pull-gguf.sh --model-id llama-3.1-8b-q4 --dry-run
 ```
 
-OCI (first Full Model soak path):
+OCI thin runtime (preferred under ~9.9 GiB free — do not bake the GGUF):
 
 ```bash
 docker run --rm --runtime=nvidia --network host \
+  -e REQUIRE_BENCH=1 \
   -v /var/lib/hypermesh/models:/models:ro \
   -v /var/lib/hypermesh/out:/out \
-  ghcr.io/fyberlabs/hypermesh-llama:agx64-jp6 \
-  llama-bench --pack thin-v1 --model /models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
+  ghcr.io/fyberlabs/hypermesh-llama:agx64-jp-thin \
+  llama-bench -m /models/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf \
+    -p 512,2048 -n 128 -r 5 -ngl 99 -fa 1
 ```
 
 `image_hash` for `oci` is `repo@digest`, never a bare sha256. Same artifact on two images is two products.
@@ -124,10 +136,12 @@ models/                 # AGX batch-12 bench matrix (pinned sha256)
 recipes/gguf/           # pull (accepts --model-id / --sha256) + sm_87 llama.cpp build
 recipes/oci/            # Dockerfile + entrypoint + ghcr push
 recipes/power/          # tegrastats sampler + wall-watt procedure
-harness/                # run_one, batch_runner, llama-bench map, schema + catalog check
+harness/                # phase1_soak, run_one, llama-bench / TTFT, job-result adapter
+scripts/phase1_soak.sh  # Host-job-shaped CLI wrapper
 out/                    # gitignored results — file soaks here (PHASE1_SOAK.md)
 docs/SCORECARD.md       # field SoT
-docs/PHASE1_SOAK.md     # host runbook for AGX64-1
+docs/PHASE1_SOAK.md     # automated entrypoint + manual appendix
+docs/HOST_JOB.md        # path_b → entrypoint; validation override consume-only
 docs/DASHBOARDS.md      # per-host / class UI notes (not this repo's job)
 ```
 

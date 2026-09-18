@@ -6,6 +6,42 @@ This runbook does **not** invent numbers. Leave every measured scorecard field `
 
 The site must not sell `llama-3.1-8b-q4` until `catalog/agx64.yaml` says `status: certified` with a measured envelope and hashes. After this soak, `status` is still `soak_pending` until someone promotes the row on purpose.
 
+## Automated entrypoint (preferred)
+
+One command on AGX64-1 (JetPack host). Host `kind=path_b` / `suite_id=thin-v1` should invoke this instead of a chat / `lease_stop` handoff. See [HOST_JOB.md](HOST_JOB.md).
+
+```bash
+./scripts/phase1_soak.sh \
+  --model-id llama-3.1-8b-q4 \
+  --pack packs/thin-v1 \
+  --device-id f6124d28-772c-4f1f-8e03-1a7a17724381 \
+  --out "out/$(hostname)-$(date +%Y%m%d)" \
+  --loader gguf
+```
+
+Dry-run (CI / no GPU; schema-valid scorecard + `job_result.json` with nulls):
+
+```bash
+./scripts/phase1_soak.sh --stub --out /tmp/hm-phase1
+```
+
+What the driver does:
+
+1. Consume the existing `path_b` job env (`HM_JOB_KIND`, `HM_SUITE_ID`, `HM_CATALOG_ID`, `HM_DEVICE_ID`, …). Exit **4** if `HM_VALIDATION_WINDOW` is denied / no hold. Do not invent a Panopticon API.
+2. Probe host (L4T, CUDA, `nvpmodel`, disk, `jetson_clocks`) → `host_probe.json` + scorecard `host.*`.
+3. Disk gate: models volume free must be ≥ pin `size_bytes` + **2 GiB** headroom. On ~9.9 GiB free, pull GGUF **once** and use a **thin** OCI runtime (binaries only). Do not bake the GGUF into the image and keep a second local copy.
+4. Ensure 30W / `nvpmodel` 2 (sudo from the wrapper when not `--stub`).
+5. Pull or reuse the pinned GGUF (`pull-gguf.sh --model-id`; refuses TBD). Verified sha256 → `identity.artifact_hash`.
+6. Resolve harness: native `llama-bench` if present, else `docker run --runtime=nvidia` when `--loader oci` and `HM_IMAGE_DIGEST` is set. `--require-bench` fails if the binary is missing.
+7. thin-v1 cells → `llama-bench.json`. After the pack hot window, `ttft_client.py` against llama-server. If the server is down, TTFT / sustained decode stay **null**.
+8. `mem_after_load.json`, `power.json` (wall watts stay null without a meter), `reliability.json`.
+9. Map raws → `scorecard.json`. Unmeasured = null. `check_scorecard.py` then `--path-b`. `run.passed` is that result only.
+10. `job_result.json` = `{passed, image_hash?}` for the **existing** Host POST. Bench does not POST.
+
+Exit codes: `0` Path B green (or `--stub` without `--require-path-b`); `2` Path B red; `3` setup/disk/pin; `4` skip (no validation window).
+
+Manual steps below remain as an appendix if you need to run pieces by hand.
+
 ## 0. What “done” means
 
 A Phase 1 soak is done when AGX64-1 has, on disk under `out/`:
@@ -160,6 +196,9 @@ out/<hostname>-<YYYYMMDD>/llama-3.1-8b-q4/
   reliability.json
   tegrastats.log
   free-after-load.txt
+  host_probe.json         # L4T, CUDA, nvpmodel, disk_free_gib, jetson_clocks
+  job_result.json         # {passed, image_hash?} for the existing Host POST
+  check_path_b.txt
 ```
 
 `out/` is gitignored. Never commit measured trees or invented numbers.
@@ -197,3 +236,5 @@ After a real green soak: promote `catalog/agx64.yaml` `llama-3.1-8b-q4` from `so
 - Use `--allow-unpinned` on a soak
 - Mark `run.passed: true` or catalog `status: certified` without `--path-b` green on this box
 - Sell or list a `catalog_id` before certified + measured envelope + hashes
+- Invent a Panopticon validation-override URL, a second job-result POST, or `docker exec` stops
+- Bake GGUF into the thin runtime image and keep a second copy under ~9.9 GiB free

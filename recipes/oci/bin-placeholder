@@ -1,0 +1,2 @@
+# Placeholder so the thin image context always has /opt/hypermesh/bin.
+# Real sm_87 llama-bench / llama-server are copied at build time on JetPack.
