@@ -1,0 +1,31 @@
+# OCI wrapper for llama.cpp on AGX (cuda-jetson / sm_87).
+# First Full Model soak path: bake a pinned GGUF into this image so
+# image_hash is repo@digest (never a bare sha256).
+#
+# Build on a JetPack-matched builder. Run with:
+#   docker run --rm --runtime=nvidia ...
+# Never --gpus.
+#
+# Phase 0: scaffold only. Default base is a generic Ubuntu so the file is
+# reviewable off-box. Production MUST override L4T_BASE to the JetPack CUDA
+# image recorded on the Fyber AGX.
+
+ARG L4T_BASE=ubuntu:22.04
+FROM ${L4T_BASE}
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      python3 \
+    && rm -rf /var/lib/apt/lists/*
+
+# TODO(phase1): build llama.cpp with GGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=87
+# TODO(phase1): COPY the pinned GGUF into /models and record sha256 as artifact_hash
+WORKDIR /opt/hypermesh
+COPY recipes/oci/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+VOLUME ["/models", "/out"]
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["llama-bench"]
