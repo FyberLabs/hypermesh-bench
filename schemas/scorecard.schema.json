@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/FyberLabs/hypermesh-bench/schemas/scorecard.schema.json",
+  "title": "Hypermesh Path B scorecard",
+  "description": "Machine-readable Path B soak result. Unmeasured metrics MUST be null. Do not invent tok/s. Do not write TOPS as tok/s.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "run",
+    "host",
+    "identity",
+    "memory",
+    "inference_sustained",
+    "power_thermals",
+    "storage",
+    "reliability",
+    "harness",
+    "numbers_policy"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "hypermesh.path_b.scorecard.v0"
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "run_id",
+        "device_id",
+        "class_id",
+        "catalog_id",
+        "passed",
+        "started_at",
+        "ended_at",
+        "skip_reason"
+      ],
+      "properties": {
+        "run_id": { "$ref": "#/$defs/nullableString" },
+        "device_id": { "$ref": "#/$defs/nullableString" },
+        "class_id": { "type": ["string", "null"] },
+        "catalog_id": { "$ref": "#/$defs/nullableString" },
+        "passed": { "type": ["boolean", "null"] },
+        "started_at": { "$ref": "#/$defs/nullableString" },
+        "ended_at": { "$ref": "#/$defs/nullableString" },
+        "skip_reason": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "class_id",
+        "sku",
+        "serial",
+        "device_id",
+        "jetpack_l4t",
+        "cuda",
+        "container_runtime",
+        "backend",
+        "loader",
+        "power_mode",
+        "nvpmodel_id",
+        "jetson_clocks",
+        "nic"
+      ],
+      "properties": {
+        "class_id": { "type": "string" },
+        "sku": { "type": "string" },
+        "serial": { "$ref": "#/$defs/nullableString" },
+        "device_id": { "$ref": "#/$defs/nullableString" },
+        "jetpack_l4t": { "type": ["string", "null"] },
+        "cuda": { "type": ["string", "null"] },
+        "container_runtime": { "type": "string" },
+        "backend": { "type": "string" },
+        "loader": { "type": "string", "enum": ["oci", "gguf"] },
+        "power_mode": { "type": ["string", "null"] },
+        "nvpmodel_id": { "type": ["integer", "null"] },
+        "jetson_clocks": { "type": ["boolean", "null"] },
+        "nic": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["iface", "speed_mbps", "wan_rtt_ms"],
+          "properties": {
+            "iface": { "type": ["string", "null"] },
+            "speed_mbps": { "$ref": "#/$defs/nullableNumber" },
+            "wan_rtt_ms": { "$ref": "#/$defs/nullableNumber" }
+          }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image_hash",
+        "artifact_hash",
+        "prompt_pack_id",
+        "suite_id",
+        "catalog_id"
+      ],
+      "properties": {
+        "image_hash": { "$ref": "#/$defs/nullableString" },
+        "artifact_hash": { "$ref": "#/$defs/nullableString" },
+        "prompt_pack_id": { "type": "string" },
+        "suite_id": { "type": "string" },
+        "catalog_id": { "$ref": "#/$defs/nullableString" }
+      }
+    },
+    "memory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "advertised_ram_gib",
+        "usable_ram_gib",
+        "ram_after_load_gib",
+        "bandwidth_class",
+        "precision",
+        "context_fit_no_swap",
+        "kv_headroom_gib",
+        "notes"
+      ],
+      "properties": {
+        "advertised_ram_gib": { "type": "number" },
+        "usable_ram_gib": { "$ref": "#/$defs/nullableNumber" },
+        "ram_after_load_gib": { "$ref": "#/$defs/nullableNumber" },
+        "bandwidth_class": { "type": "string" },
+        "precision": { "type": ["string", "null"] },
+        "context_fit_no_swap": { "type": ["integer", "null"] },
+        "kv_headroom_gib": { "$ref": "#/$defs/nullableNumber" },
+        "notes": { "type": "string" }
+      }
+    },
+    "inference_sustained": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prompt_pack",
+        "batch",
+        "hot_window_s",
+        "ttft_ms_p50_after_throttle",
+        "ttft_ms_p95_after_throttle",
+        "decode_tok_s_p50_after_throttle",
+        "decode_tok_s_p95_after_throttle",
+        "prefill_tok_s_p50",
+        "peak_vs_sustained"
+      ],
+      "properties": {
+        "prompt_pack": { "type": "string" },
+        "batch": { "type": "integer" },
+        "hot_window_s": { "type": "integer" },
+        "ttft_ms_p50_after_throttle": { "$ref": "#/$defs/nullableNumber" },
+        "ttft_ms_p95_after_throttle": { "$ref": "#/$defs/nullableNumber" },
+        "decode_tok_s_p50_after_throttle": { "$ref": "#/$defs/nullableNumber" },
+        "decode_tok_s_p95_after_throttle": { "$ref": "#/$defs/nullableNumber" },
+        "prefill_tok_s_p50": { "$ref": "#/$defs/nullableNumber" },
+        "peak_vs_sustained": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "peak_decode_tok_s",
+            "sustained_decode_tok_s",
+            "pass_rule"
+          ],
+          "properties": {
+            "peak_decode_tok_s": { "$ref": "#/$defs/nullableNumber" },
+            "sustained_decode_tok_s": { "$ref": "#/$defs/nullableNumber" },
+            "pass_rule": {
+              "type": "string",
+              "const": "sustained_within_band_of_class_envelope; peak_alone_fails"
+            }
+          }
+        }
+      }
+    },
+    "power_thermals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "wall_watts_idle",
+        "wall_watts_load",
+        "tokens_per_kwh",
+        "junction_c_max",
+        "throttle_events",
+        "duty_cycle"
+      ],
+      "properties": {
+        "wall_watts_idle": { "$ref": "#/$defs/nullableNumber" },
+        "wall_watts_load": { "$ref": "#/$defs/nullableNumber" },
+        "tokens_per_kwh": { "$ref": "#/$defs/nullableNumber" },
+        "junction_c_max": { "$ref": "#/$defs/nullableNumber" },
+        "throttle_events": { "type": ["integer", "null"] },
+        "duty_cycle": { "$ref": "#/$defs/nullableNumber" }
+      }
+    },
+    "storage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nvme_gib", "artifact_and_image_fit"],
+      "properties": {
+        "nvme_gib": { "$ref": "#/$defs/nullableNumber" },
+        "artifact_and_image_fit": { "type": ["boolean", "null"] }
+      }
+    },
+    "reliability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "reboot_rate_per_24h",
+        "path_b",
+        "time_to_fail_s",
+        "unexpected_restart"
+      ],
+      "properties": {
+        "reboot_rate_per_24h": { "$ref": "#/$defs/nullableNumber" },
+        "path_b": {
+          "type": ["string", "null"],
+          "enum": ["pass", "fail", "skip", null]
+        },
+        "time_to_fail_s": { "$ref": "#/$defs/nullableNumber" },
+        "unexpected_restart": { "type": ["boolean", "null"] }
+      }
+    },
+    "harness": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "version", "raw_outputs"],
+      "properties": {
+        "name": { "type": ["string", "null"] },
+        "version": { "type": ["string", "null"] },
+        "raw_outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "numbers_policy": {
+      "type": "string",
+      "const": "Do not invent tok/s. Leave null until measured on this class + pack + image."
+    }
+  },
+  "$defs": {
+    "nullableNumber": {
+      "type": ["number", "null"]
+    },
+    "nullableString": {
+      "type": ["string", "null"]
+    }
+  }
+}

@@ -1,0 +1,74 @@
+# Schema + harness stub lint. No GPU. Must not require measured tok/s.
+name: lint-schema
+
+on:
+  push:
+    branches: [main, "cursor/**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-schema:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install harness deps
+        run: python3 -m pip install -r requirements.txt
+      - name: Example scorecard is schema-valid
+        run: |
+          python3 harness/check_scorecard.py --emit-example \
+            | python3 harness/check_scorecard.py --schema schemas/scorecard.schema.json
+      - name: Stub run_one + batch emit null scorecards
+        run: |
+          python3 harness/run_one.py \
+            --manifest models/agx64-batch12.yaml \
+            --pack packs/thin-v1 \
+            --model-id llama-3.1-8b-q4 \
+            --out /tmp/hm-one
+          python3 harness/batch_runner.py \
+            --manifest models/agx64-batch12.yaml \
+            --pack packs/thin-v1 \
+            --out /tmp/hm-batch
+          python3 harness/check_scorecard.py /tmp/hm-one/llama-3.1-8b-q4/scorecard.json /tmp/hm-batch/*/scorecard.json
+      - name: Path B enroll rules reject unmeasured stubs
+        run: |
+          if python3 harness/check_scorecard.py --path-b /tmp/hm-one/llama-3.1-8b-q4/scorecard.json; then
+            echo "expected --path-b to fail on a Phase 0 null scorecard" >&2
+            exit 1
+          fi
+      - name: No invented tok/s in stub outputs
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          def assert_null_metrics(path: Path) -> None:
+              card = json.loads(path.read_text())
+              inf = card["inference_sustained"]
+              for key in (
+                  "ttft_ms_p50_after_throttle",
+                  "decode_tok_s_p50_after_throttle",
+                  "prefill_tok_s_p50",
+              ):
+                  if inf[key] is not None:
+                      raise SystemExit(f"{path}: {key} must be null in Phase 0 stubs")
+              peak = inf["peak_vs_sustained"]
+              if peak["peak_decode_tok_s"] is not None or peak["sustained_decode_tok_s"] is not None:
+                  raise SystemExit(f"{path}: peak/sustained decode must be null in Phase 0 stubs")
+              if card["identity"]["image_hash"] is not None:
+                  raise SystemExit(f"{path}: do not invent image_hash")
+              if card["identity"]["artifact_hash"] is not None:
+                  raise SystemExit(f"{path}: do not invent artifact_hash")
+              if card["run"]["passed"] is True:
+                  raise SystemExit(f"{path}: stubs must not mark Path B passed")
+
+          paths = list(Path("/tmp/hm-batch").glob("*/scorecard.json"))
+          if len(paths) != 12:
+              raise SystemExit(f"expected 12 scorecards, got {len(paths)}")
+          for path in paths:
+              assert_null_metrics(path)
+          print("ok: 12 null scorecards, no invented metrics")
+          PY

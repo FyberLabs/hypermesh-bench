@@ -1,0 +1,24 @@
+{
+  "pack_id": "thin-v1",
+  "notes": "Fixed UTF-8 stubs for a future TTFT client. Path B llama-bench cells use -p 512,2048 / -n 128, not these strings as token truth.",
+  "prompts": [
+    {
+      "id": "p512",
+      "target_tokens": 512,
+      "role": "prefill_cell",
+      "text": "Repeat the following paragraph until the harness reaches the target prefill length, then stop. This is a Hypermesh Path B soak prompt, not a quality eval. The certified number is sustained decode and TTFT after the box is hot. Do not invent tok/s.\n"
+    },
+    {
+      "id": "p2048",
+      "target_tokens": 2048,
+      "role": "prefill_cell",
+      "text": "Repeat the following paragraph until the harness reaches the target prefill length, then stop. This is a Hypermesh Path B soak prompt, not a quality eval. The certified number is sustained decode and TTFT after the box is hot. Do not invent tok/s.\n"
+    },
+    {
+      "id": "gen128",
+      "target_tokens": 128,
+      "role": "decode_cell",
+      "text": "Continue with a short, deterministic listing of integers starting at 1."
+    }
+  ]
+}

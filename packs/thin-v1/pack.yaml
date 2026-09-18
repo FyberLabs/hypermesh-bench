@@ -1,0 +1,26 @@
+# thin-v1 — first AGX Path B prompt pack.
+# Do not evaluate model quality here. Deterministic llama-bench cells only.
+pack_id: thin-v1
+suite_id: thin-v1
+class_id: fyber-agx-orin-64gb
+backend: cuda-jetson
+# First Full Model soak path is OCI wrapping a pinned GGUF.
+loader_default: oci
+power_mode: "30W"
+nvpmodel_id: 2
+jetson_clocks: false
+hot_window_s: 600
+batch: 1
+prefill_tokens: [512, 2048]
+gen_tokens: 128
+reps: 5
+ngl: 99
+flash_attn: true
+context_fit_default: 4096
+prompts_file: prompts.json
+pass_rule: sustained_within_band_of_class_envelope; peak_alone_fails
+notes: >
+  Product default power is 30W (nvpmodel id 2). Do not default MAXN.
+  llama-bench cells: -p 512,2048 -n 128 -r 5 --output-format json.
+  Leave tok/s null until measured on this class + pack + image.
+  JetPack/L4T version on the Fyber AGX is the only soak source of truth — record it.
