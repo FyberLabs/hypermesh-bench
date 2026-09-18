@@ -72,7 +72,10 @@ def write_placeholders(out_dir: Path) -> None:
             {
                 "image_hash": None,
                 "artifact_hash": None,
-                "note": "sha256 TBD until soak pull; oci image_hash is repo@digest",
+                "note": (
+                    "artifact_hash stays null until the pinned file is pulled and "
+                    "verified on the host; oci image_hash is repo@digest"
+                ),
             },
             indent=2,
         )
@@ -84,7 +87,7 @@ def write_placeholders(out_dir: Path) -> None:
             [
                 "# Phase 1 TODOs for this model",
                 "",
-                "- Pin sha256 in models/agx64-batch12.yaml and verify at pull",
+                "- Pull the pinned sha256 (pull-gguf.sh --model-id …) and verify at soak",
                 "- nvpmodel -m 2 (30W); record jetson_clocks",
                 "- Load weights; write mem_after_load.json from free/tegrastats",
                 "- Hot window (pack hot_window_s) then llama-bench JSON",

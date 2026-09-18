@@ -1,0 +1,506 @@
+# Product-2 catalog for AGX Orin 64GB (Full Model / loaded-model lease).
+# Rows may be offered AFTER soak, not before.
+# Bench matrix (all 12): models/agx64-batch12.yaml
+# Do not invent tok/s. Do not write TOPS as tok/s.
+# Third-party blog rates are other people's boxes — never copy them here.
+class_id: fyber-agx-orin-64gb
+sku: NVIDIA Jetson AGX Orin 64GB
+product: 2
+kind_default: model
+backend: cuda-jetson
+# First Full Model soak path: OCI wrapper that contains the GGUF.
+loader_default: oci
+loaders: [oci, gguf]
+runtime: nvidia  # docker run --runtime=nvidia (never --gpus)
+power_profile:
+  name: "30W"
+  watts: 30
+  nvpmodel_id: 2
+advertised_context_default: 4096
+# Site must not sell a catalog_id until status=certified with a measured
+# envelope and pinned hashes. soak_pending and candidate are not sellable.
+sell_rule: >
+  Do not sell a catalog_id until status=certified with a measured envelope
+  (usable_ram, sustained TTFT / tok/s after throttle, wall watts) and
+  non-empty image_hash + artifact_hash. Listed visibility only after that.
+status_enum: [soak_pending, certified, rejected, candidate]
+visibility_enum: [private, listed]
+first_catalog_id: llama-3.1-8b-q4
+notes: >
+  A Product-2 row is one artifact: one file hash, one quant, one loader,
+  one backend, one class, one power profile, one advertised context, one
+  measured envelope. Usable RAM on Orin UMA is the limiter. Soak must
+  measure usable_ram before treating 4096 (or any higher ctx) as a fit.
+  Same artifact on two images is two products.
+
+rows:
+  # --- proposed first row: Path B / Full Model unblock ---
+  - catalog_id: llama-3.1-8b-q4
+    status: soak_pending
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Llama 3.1 8B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: oci
+    loaders: [oci, gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: >
+      Start at 4096. Soak must measure usable_ram after OS+runtime+weights+KV
+      before advertising a higher context. Do not treat file size < 64 GiB as fit.
+    artifact:
+      hf: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+      file: Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
+      sha256: 7b064f5842bf9532c91456deda288a1b672397a54fa729aa665952863033557c
+      size_bytes: 4920739232
+      url: https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
+    why: Catalog pin and first Path B / Full Model soak
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      ttft_ms_p95_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      decode_tok_s_p95_after_throttle: null
+      prefill_tok_s_p50: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      tokens_per_kwh: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  # --- remaining batch-12: candidates, not certified, not sellable ---
+  - catalog_id: llama-3.2-3b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Llama 3.2 3B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf, oci]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Llama-3.2-3B-Instruct-GGUF
+      file: Llama-3.2-3B-Instruct-Q4_K_M.gguf
+      sha256: 6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff
+      size_bytes: 2019377696
+      url: https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf
+    why: Fast baseline / regression canary. Not a catalog headline.
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: phi-3.5-mini-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Phi-3.5-mini Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Phi-3.5-mini-instruct-GGUF
+      file: Phi-3.5-mini-instruct-Q4_K_M.gguf
+      sha256: e4165e3a71af97f1b4820da61079826d8752a2088e313af0c7d346796c38eff5
+      size_bytes: 2393232672
+      url: https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf
+    why: SLM baseline
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: qwen-2.5-7b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Qwen2.5 7B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Qwen2.5-7B-Instruct-GGUF
+      file: Qwen2.5-7B-Instruct-Q4_K_M.gguf
+      sha256: 65b8fcd92af6b4fefa935c625d1ac27ea29dcb6ee14589c55a8f115ceaaa1423
+      size_bytes: 4683074240
+      url: https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf
+    why: NX-class reference on AGX iron
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: llama-3.1-8b-q8
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Llama 3.1 8B Instruct
+    quant: Q8_0
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
+      file: Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
+      sha256: 9da71c45c90a821809821244d4971e5e5dfad7eb091f0b8ff0546392393b6283
+      size_bytes: 8540775840
+      url: https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
+    why: Same family quality ladder vs Q4_K_M
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: gemma-2-9b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Gemma 2 9B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/gemma-2-9b-it-GGUF
+      file: gemma-2-9b-it-Q4_K_M.gguf
+      sha256: 13b2a7b4115bbd0900162edcebe476da1ba1fc24e718e8b40d32f6e300f56dfe
+      size_bytes: 5761057728
+      url: https://huggingface.co/bartowski/gemma-2-9b-it-GGUF/resolve/main/gemma-2-9b-it-Q4_K_M.gguf
+    why: Alt mid-size open model. Check Gemma terms before listing.
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: mistral-nemo-12b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Mistral-Nemo 12B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Mistral-Nemo-Instruct-2407-GGUF
+      file: Mistral-Nemo-Instruct-2407-Q4_K_M.gguf
+      sha256: 7c1a10d202d8788dbe5628dc962254d10654c853cae6aaeca0618f05490d4a46
+      size_bytes: 7477208192
+      url: https://huggingface.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF/resolve/main/Mistral-Nemo-Instruct-2407-Q4_K_M.gguf
+    why: 12B tier between 8B and 14B
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: phi-4-14b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Phi-4 (14B)
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/phi-4-GGUF
+      file: phi-4-Q4_K_M.gguf
+      sha256: 009aba717c09d4a35890c7d35eb59d54e1dba884c7c526e7197d9c13ab5911d9
+      size_bytes: 9053114816
+      url: https://huggingface.co/bartowski/phi-4-GGUF/resolve/main/phi-4-Q4_K_M.gguf
+    why: Strong 14B open model
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: qwen-2.5-14b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Qwen2.5 14B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: Start at 4096. Soak must measure usable_ram before raising ctx.
+    artifact:
+      hf: bartowski/Qwen2.5-14B-Instruct-GGUF
+      file: Qwen2.5-14B-Instruct-Q4_K_M.gguf
+      sha256: e47ad95dad6ff848b431053b375adb5d39321290ea2c638682577dafca87c008
+      size_bytes: 8988110976
+      url: https://huggingface.co/bartowski/Qwen2.5-14B-Instruct-GGUF/resolve/main/Qwen2.5-14B-Instruct-Q4_K_M.gguf
+    why: AGX comfortable mid
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: gemma-2-27b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Gemma 2 27B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: >
+      Start at 4096. First pass ctx ≤4k. Soak must measure usable_ram.
+      License check before listing.
+    artifact:
+      hf: bartowski/gemma-2-27b-it-GGUF
+      file: gemma-2-27b-it-Q4_K_M.gguf
+      sha256: 503a87ab47c9e7fb27545ec8592b4dc4493538bd47b397ceb3197e10a0370d23
+      size_bytes: 16645381632
+      url: https://huggingface.co/bartowski/gemma-2-27b-it-GGUF/resolve/main/gemma-2-27b-it-Q4_K_M.gguf
+    why: Stress UMA before 32B
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: qwen-2.5-32b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Qwen2.5 32B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: oci
+    loaders: [oci, gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: >
+      Start at 4096 (also soak 2048). KV at 8k may hurt. Measure usable_ram.
+      Next catalog pin after llama-3.1-8b-q4 is certified — still not sellable.
+    artifact:
+      hf: bartowski/Qwen2.5-32B-Instruct-GGUF
+      file: Qwen2.5-32B-Instruct-Q4_K_M.gguf
+      sha256: 2e5f6daea180dbc59f65a40641e94d3973b5dbaa32b3c0acf54647fa874e519e
+      size_bytes: 19851336576
+      url: https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF/resolve/main/Qwen2.5-32B-Instruct-Q4_K_M.gguf
+    why: Proposed later catalog pin. Candidate until 8B soak is green and this row is soaked.
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null
+
+  - catalog_id: llama-3.1-70b-q4
+    status: candidate
+    visibility: private
+    certified: false
+    kind: model
+    class_id: fyber-agx-orin-64gb
+    name: Llama 3.1 70B Instruct
+    quant: Q4_K_M
+    format: gguf
+    loader: gguf
+    loaders: [gguf]
+    backend: cuda-jetson
+    runtime: nvidia
+    power_profile:
+      name: "30W"
+      watts: 30
+      nvpmodel_id: 2
+    advertised_context: 4096
+    advertised_context_notes: >
+      Start at 4096 (also soak 2048). Weights-only with little UMA headroom.
+      Measure usable_ram first. Skip auto-fail if OOM — record skipped:uma.
+      Stretch. Honest about speed. Not sellable until certified.
+    artifact:
+      hf: bartowski/Meta-Llama-3.1-70B-Instruct-GGUF
+      file: Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
+      sha256: f775c87029be95fb41df9e2882e6e938b73121c30ffc235ac6b6b880add49aa5
+      size_bytes: 42520398400
+      url: https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
+    why: Stretch catalog. Conditional fit. Candidate, not certified.
+    scorecard:
+      usable_ram_gib: null
+      ram_after_load_gib: null
+      context_fit_no_swap: null
+      ttft_ms_p50_after_throttle: null
+      decode_tok_s_p50_after_throttle: null
+      wall_watts_idle: null
+      wall_watts_load: null
+      image_hash: null
+      artifact_hash: null
+      passed: null

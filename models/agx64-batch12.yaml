@@ -1,5 +1,6 @@
 # AGX Orin 64GB first batch (draft §4.2).
-# sha256 is TBD until soak pull. Do not treat filename as identity.
+# This is the bench matrix, not the sellable catalog. Product-2 rows live in catalog/.
+# sha256 values are verified HuggingFace LFS oids. Filename is not identity.
 # Do not claim measured Hypermesh tok/s. Do not write TOPS as tok/s.
 class_id: fyber-agx-orin-64gb
 sku: NVIDIA Jetson AGX Orin 64GB
@@ -13,7 +14,8 @@ first_model_id: llama-3.1-8b-q4
 notes: >
   Usable RAM on Orin UMA is the limiter. Fit ≠ file size < 64 GiB.
   Context assumption for "likely fit" is 2048–4096 unless noted.
-  Swap does not count as fits. Pin file sha256 as artifact_hash at soak.
+  Swap does not count as fits. artifact_hash on a scorecard is the verified
+  file sha256 after pull on the host — the pin below is the expected oid.
 
 models:
   - id: llama-3.1-8b-q4
@@ -24,7 +26,8 @@ models:
     hf: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
     file: Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 7b064f5842bf9532c91456deda288a1b672397a54fa729aa665952863033557c
+    size_bytes: 4920739232  # 4.58 GiB; HF LFS oid
     est_weight_gib: 4.9
     fit: likely
     catalog_id: llama-3.1-8b-q4
@@ -41,7 +44,8 @@ models:
     hf: bartowski/Llama-3.2-3B-Instruct-GGUF
     file: Llama-3.2-3B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Llama-3.2-3B-Instruct-GGUF/resolve/main/Llama-3.2-3B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 6c1a2b41161032677be168d354123594c0e6e67d2b9227c84f296ad037c728ff
+    size_bytes: 2019377696  # 1.88 GiB; HF LFS oid
     est_weight_gib: 2.0
     fit: likely
     catalog_id: null
@@ -58,7 +62,8 @@ models:
     hf: bartowski/Phi-3.5-mini-instruct-GGUF
     file: Phi-3.5-mini-instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: e4165e3a71af97f1b4820da61079826d8752a2088e313af0c7d346796c38eff5
+    size_bytes: 2393232672  # 2.23 GiB; HF LFS oid
     est_weight_gib: 2.4
     fit: likely
     catalog_id: null
@@ -75,7 +80,8 @@ models:
     hf: bartowski/Qwen2.5-7B-Instruct-GGUF
     file: Qwen2.5-7B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Qwen2.5-7B-Instruct-GGUF/resolve/main/Qwen2.5-7B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 65b8fcd92af6b4fefa935c625d1ac27ea29dcb6ee14589c55a8f115ceaaa1423
+    size_bytes: 4683074240  # 4.36 GiB; HF LFS oid
     est_weight_gib: 4.7
     fit: likely
     catalog_id: null
@@ -92,7 +98,8 @@ models:
     hf: bartowski/Meta-Llama-3.1-8B-Instruct-GGUF
     file: Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
     url: https://huggingface.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-8B-Instruct-Q8_0.gguf
-    sha256: TBD
+    sha256: 9da71c45c90a821809821244d4971e5e5dfad7eb091f0b8ff0546392393b6283
+    size_bytes: 8540775840  # 7.96 GiB; HF LFS oid
     est_weight_gib: 8.5
     fit: likely
     catalog_id: null
@@ -109,7 +116,8 @@ models:
     hf: bartowski/gemma-2-9b-it-GGUF
     file: gemma-2-9b-it-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/gemma-2-9b-it-GGUF/resolve/main/gemma-2-9b-it-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 13b2a7b4115bbd0900162edcebe476da1ba1fc24e718e8b40d32f6e300f56dfe
+    size_bytes: 5761057728  # 5.37 GiB; HF LFS oid
     est_weight_gib: 5.5
     fit: likely
     catalog_id: null
@@ -126,7 +134,8 @@ models:
     hf: bartowski/Mistral-Nemo-Instruct-2407-GGUF
     file: Mistral-Nemo-Instruct-2407-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Mistral-Nemo-Instruct-2407-GGUF/resolve/main/Mistral-Nemo-Instruct-2407-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 7c1a10d202d8788dbe5628dc962254d10654c853cae6aaeca0618f05490d4a46
+    size_bytes: 7477208192  # 6.97 GiB; HF LFS oid
     est_weight_gib: 7.5
     fit: likely
     catalog_id: null
@@ -143,7 +152,8 @@ models:
     hf: bartowski/phi-4-GGUF
     file: phi-4-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/phi-4-GGUF/resolve/main/phi-4-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 009aba717c09d4a35890c7d35eb59d54e1dba884c7c526e7197d9c13ab5911d9
+    size_bytes: 9053114816  # 8.43 GiB; HF LFS oid
     est_weight_gib: 9.0
     fit: likely
     catalog_id: null
@@ -160,7 +170,8 @@ models:
     hf: bartowski/Qwen2.5-14B-Instruct-GGUF
     file: Qwen2.5-14B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Qwen2.5-14B-Instruct-GGUF/resolve/main/Qwen2.5-14B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: e47ad95dad6ff848b431053b375adb5d39321290ea2c638682577dafca87c008
+    size_bytes: 8988110976  # 8.37 GiB; HF LFS oid
     est_weight_gib: 9.0
     fit: likely
     catalog_id: null
@@ -177,7 +188,8 @@ models:
     hf: bartowski/gemma-2-27b-it-GGUF
     file: gemma-2-27b-it-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/gemma-2-27b-it-GGUF/resolve/main/gemma-2-27b-it-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 503a87ab47c9e7fb27545ec8592b4dc4493538bd47b397ceb3197e10a0370d23
+    size_bytes: 16645381632  # 15.50 GiB; HF LFS oid
     est_weight_gib: 16.5
     fit: likely_with_ctx_cap
     ctx: [2048, 4096]
@@ -195,7 +207,8 @@ models:
     hf: bartowski/Qwen2.5-32B-Instruct-GGUF
     file: Qwen2.5-32B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Qwen2.5-32B-Instruct-GGUF/resolve/main/Qwen2.5-32B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: 2e5f6daea180dbc59f65a40641e94d3973b5dbaa32b3c0acf54647fa874e519e
+    size_bytes: 19851336576  # 18.49 GiB; HF LFS oid
     est_weight_gib: 19.5
     fit: likely_with_ctx_cap
     ctx: [2048, 4096]
@@ -213,7 +226,8 @@ models:
     hf: bartowski/Meta-Llama-3.1-70B-Instruct-GGUF
     file: Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
     url: https://huggingface.co/bartowski/Meta-Llama-3.1-70B-Instruct-GGUF/resolve/main/Meta-Llama-3.1-70B-Instruct-Q4_K_M.gguf
-    sha256: TBD
+    sha256: f775c87029be95fb41df9e2882e6e938b73121c30ffc235ac6b6b880add49aa5
+    size_bytes: 42520398400  # 39.60 GiB; HF LFS oid
     est_weight_gib: 43.5
     fit: conditional
     ctx: [2048, 4096]
