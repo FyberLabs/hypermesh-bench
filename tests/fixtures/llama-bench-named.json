@@ -1,0 +1,6 @@
+{
+  "results": [
+    {"test": "pp512", "avg_ts": 200.0},
+    {"test": "tg128", "avg_ts": 40.0}
+  ]
+}

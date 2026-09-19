@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Map llama-bench JSON onto Path B scorecard fields.
 
-Phase 0: if raw output is missing or a not_run stub, every measured field
-stays null. Do not invent tok/s. Do not copy third-party rates.
+If raw output is missing or a not_run stub, every measured field stays
+null. Do not invent tok/s. Do not copy third-party rates.
 
-TODO(phase1): parse real llama-bench --output-format json (pp*/tg* mean±stdev)
-and still leave *_after_throttle null until a hot-window soak exists.
+Real llama-bench --output-format json (pp*/tg* or n_prompt/n_gen + avg_ts)
+maps to cold prefill / peak decode only. *_after_throttle stays null until
+a hot-window client writes ttft_hot.json.
 """
 
 from __future__ import annotations
@@ -136,16 +137,37 @@ def empty_scorecard(
     }
 
 
+def _cell_name(row: dict[str, Any]) -> str:
+    test = row.get("test")
+    if isinstance(test, str) and test.strip():
+        return test.strip()
+    n_prompt = row.get("n_prompt")
+    n_gen = row.get("n_gen")
+    try:
+        prompt_n = int(n_prompt) if n_prompt is not None else 0
+    except (TypeError, ValueError):
+        prompt_n = 0
+    try:
+        gen_n = int(n_gen) if n_gen is not None else 0
+    except (TypeError, ValueError):
+        gen_n = 0
+    if gen_n == 0 and prompt_n > 0:
+        return f"pp{prompt_n}"
+    if prompt_n == 0 and gen_n > 0:
+        return f"tg{gen_n}"
+    return ""
+
+
 def _rows(raw: Any) -> list[dict[str, Any]]:
     if raw is None:
         return []
     if isinstance(raw, dict):
-        if raw.get("status") == "not_run":
+        if raw.get("status") in ("not_run", "unavailable"):
             return []
         results = raw.get("results")
         if isinstance(results, list):
             return [r for r in results if isinstance(r, dict)]
-        if "test" in raw or "avg_ts" in raw:
+        if "test" in raw or "avg_ts" in raw or "n_prompt" in raw:
             return [raw]
         return []
     if isinstance(raw, list):
@@ -156,9 +178,9 @@ def _rows(raw: Any) -> list[dict[str, Any]]:
 def map_llama_bench(raw: Any) -> dict[str, Any]:
     """Extract measured llama-bench cells. Unknown / stub → all null.
 
-    TODO(phase1): map pp* → prefill_tok_s_p50 and tg* → a *cold* decode rate.
-    TODO(phase1): ttft_ms_*_after_throttle and decode_tok_s_*_after_throttle
-    stay null until a hot-window client/soak writes them. Peak-only is not a pass.
+    pp* / n_prompt→prefill_tok_s_p50. tg* / n_gen→cold decode (peak only).
+    after_throttle fields stay null until apply_hot() sees ttft_hot.json.
+    Peak-only is not a Path B pass.
     """
     mapped = {
         "prefill_tok_s_p50": None,
@@ -175,7 +197,7 @@ def map_llama_bench(raw: Any) -> dict[str, Any]:
     decodes: list[float] = []
     tests: list[str] = []
     for row in rows:
-        test = str(row.get("test") or "")
+        test = _cell_name(row)
         avg = row.get("avg_ts")
         if not isinstance(avg, (int, float)):
             continue
@@ -195,12 +217,56 @@ def map_llama_bench(raw: Any) -> dict[str, Any]:
     return mapped
 
 
+def map_ttft_hot(raw: Any) -> dict[str, Any]:
+    """Copy measured hot-window fields only. Missing / not_run → all null."""
+    mapped = {
+        "ttft_ms_p50_after_throttle": None,
+        "ttft_ms_p95_after_throttle": None,
+        "decode_tok_s_p50_after_throttle": None,
+        "decode_tok_s_p95_after_throttle": None,
+    }
+    if not isinstance(raw, dict):
+        return mapped
+    if raw.get("status") in ("not_run", "unavailable", None) and raw.get("ttft_ms_p50") is None:
+        return mapped
+    pairs = (
+        ("ttft_ms_p50", "ttft_ms_p50_after_throttle"),
+        ("ttft_ms_p95", "ttft_ms_p95_after_throttle"),
+        ("decode_tok_s_p50", "decode_tok_s_p50_after_throttle"),
+        ("decode_tok_s_p95", "decode_tok_s_p95_after_throttle"),
+    )
+    for src, dest in pairs:
+        val = raw.get(src)
+        if isinstance(val, (int, float)):
+            mapped[dest] = float(val)
+    return mapped
+
+
 def apply_map(scorecard: dict[str, Any], mapped: dict[str, Any]) -> dict[str, Any]:
     inf = scorecard["inference_sustained"]
-    # Only fill the cold prefill cell if llama-bench actually ran.
+    peak = inf.setdefault("peak_vs_sustained", {})
+    # Only fill the cold prefill / peak cells if llama-bench actually ran.
     # Never promote cold decode into decode_tok_s_p50_after_throttle.
     if mapped.get("prefill_tok_s_p50") is not None:
         inf["prefill_tok_s_p50"] = mapped["prefill_tok_s_p50"]
+    if mapped.get("decode_tok_s_cold") is not None:
+        peak["peak_decode_tok_s"] = mapped["decode_tok_s_cold"]
+    return scorecard
+
+
+def apply_hot(scorecard: dict[str, Any], mapped: dict[str, Any]) -> dict[str, Any]:
+    inf = scorecard["inference_sustained"]
+    peak = inf.setdefault("peak_vs_sustained", {})
+    for key in (
+        "ttft_ms_p50_after_throttle",
+        "ttft_ms_p95_after_throttle",
+        "decode_tok_s_p50_after_throttle",
+        "decode_tok_s_p95_after_throttle",
+    ):
+        if mapped.get(key) is not None:
+            inf[key] = mapped[key]
+    if mapped.get("decode_tok_s_p50_after_throttle") is not None:
+        peak["sustained_decode_tok_s"] = mapped["decode_tok_s_p50_after_throttle"]
     return scorecard
 
 

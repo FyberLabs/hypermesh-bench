@@ -1,14 +1,25 @@
-# OCI wrapper for llama.cpp on AGX (cuda-jetson / sm_87).
-# First Full Model soak path: bake a pinned GGUF into this image so
-# image_hash is repo@digest (never a bare sha256).
+# Thin llama.cpp runtime for AGX (cuda-jetson / sm_87).
+# Do NOT bake a GGUF by default. Mount weights at /models.
 #
-# Build on a JetPack-matched builder. Run with:
-#   docker run --rm --runtime=nvidia ...
+# Production builds MUST set L4T_BASE to the JetPack CUDA image recorded
+# on the Fyber AGX (not a laptop Ubuntu). Alpine-first is the general
+# container policy; this CUDA runtime is L4T because sm_87 needs JetPack
+# userspace. Host OS stays JetPack/L4T — never Alpine on the box.
+#
+# Build on a JetPack-matched builder:
+#   docker build -f recipes/oci/Dockerfile.llama \
+#     --build-arg L4T_BASE=nvcr.io/nvidia/l4t-cuda:<pin>-runtime \
+#     --build-arg LLAMA_BIN_SRC=/path/on/builder/bin \
+#     -t ghcr.io/fyberlabs/hypermesh-llama:agx64-jp-thin .
+#
+# Run:
+#   docker run --rm --runtime=nvidia --network host \
+#     -v $MODELS:/models:ro -v $OUT:/out \
+#     IMAGE llama-bench -m /models/….gguf …
 # Never --gpus.
 #
-# Phase 0: scaffold only. Default base is a generic Ubuntu so the file is
-# reviewable off-box. Production MUST override L4T_BASE to the JetPack CUDA
-# image recorded on the Fyber AGX.
+# Optional fat tag (Full Model lease later): a *separate* Dockerfile that
+# COPY the pinned GGUF. Do not bake+keep a local GGUF copy under ~9.9 GiB free.
 
 ARG L4T_BASE=ubuntu:22.04
 FROM ${L4T_BASE}
@@ -20,12 +31,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# TODO(phase1): build llama.cpp with GGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=87
-# TODO(phase1): COPY the pinned GGUF into /models and record sha256 as artifact_hash
+# Copy prebuilt sm_87 llama-bench + llama-server when the builder has them.
+# Leave the image thin (no GGUF). Missing binaries fail at entry when
+# REQUIRE_BENCH=1 — soak must not silently not_run.
+ARG LLAMA_BIN_SRC=""
 WORKDIR /opt/hypermesh
+RUN mkdir -p /opt/hypermesh/bin
 COPY recipes/oci/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+# Optional: docker build --build-arg LLAMA_BIN_SRC=... with a context that
+# already contains bin/llama-bench. Default context has no binaries.
+COPY recipes/oci/bin-placeholder /opt/hypermesh/bin/.keep
 
 VOLUME ["/models", "/out"]
+ENV LLAMA_BIN_DIR=/opt/hypermesh/bin
+ENV HYPERMESH_OUT=/out
+# Soak / Host path_b should set REQUIRE_BENCH=1.
+ENV REQUIRE_BENCH=0
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["llama-bench"]

@@ -1,0 +1,29 @@
+[
+  {
+    "build_commit": "testonly",
+    "n_gpu_layers": 99,
+    "flash_attn": true,
+    "n_prompt": 512,
+    "n_gen": 0,
+    "avg_ts": 210.5,
+    "stddev_ts": 1.25
+  },
+  {
+    "build_commit": "testonly",
+    "n_gpu_layers": 99,
+    "flash_attn": true,
+    "n_prompt": 2048,
+    "n_gen": 0,
+    "avg_ts": 180.25,
+    "stddev_ts": 2.0
+  },
+  {
+    "build_commit": "testonly",
+    "n_gpu_layers": 99,
+    "flash_attn": true,
+    "n_prompt": 0,
+    "n_gen": 128,
+    "avg_ts": 42.0,
+    "stddev_ts": 0.5
+  }
+]

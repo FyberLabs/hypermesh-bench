@@ -83,3 +83,41 @@ jobs:
               assert_null_metrics(path)
           print("ok: 12 null scorecards, no invented metrics")
           PY
+      - name: Fixture unit tests (no GPU)
+        run: python3 -m unittest discover -s tests -v
+      - name: phase1_soak --stub dry-run
+        run: |
+          ./scripts/phase1_soak.sh --help
+          ./scripts/phase1_soak.sh --stub --out /tmp/hm-phase1 --models-dir /tmp/hm-models
+          python3 harness/check_scorecard.py /tmp/hm-phase1/llama-3.1-8b-q4/scorecard.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          dest = Path("/tmp/hm-phase1/llama-3.1-8b-q4")
+          card = json.loads((dest / "scorecard.json").read_text())
+          job = json.loads((dest / "job_result.json").read_text())
+          inf = card["inference_sustained"]
+          for key in (
+              "ttft_ms_p50_after_throttle",
+              "decode_tok_s_p50_after_throttle",
+              "prefill_tok_s_p50",
+          ):
+              if inf[key] is not None:
+                  raise SystemExit(f"phase1 stub invented {key}")
+          if card["identity"]["image_hash"] is not None:
+              raise SystemExit("phase1 stub invented image_hash")
+          if card["identity"]["artifact_hash"] is not None:
+              raise SystemExit("phase1 stub invented artifact_hash")
+          if job["passed"] is True:
+              raise SystemExit("phase1 stub job_result.passed must be false")
+          if job["image_hash"] is not None:
+              raise SystemExit("phase1 stub invented job_result.image_hash")
+          if card["run"]["passed"] is True:
+              raise SystemExit("phase1 stub must not mark Path B passed")
+          print("ok: phase1 stub scorecard + job_result with nulls")
+          PY
+          if python3 harness/check_scorecard.py --path-b /tmp/hm-phase1/llama-3.1-8b-q4/scorecard.json; then
+            echo "expected --path-b to fail on a stub soak" >&2
+            exit 1
+          fi
