@@ -112,6 +112,14 @@ Dry-run (no download):
 ./recipes/gguf/pull-gguf.sh --model-id llama-3.1-8b-q4 --dry-run
 ```
 
+## Crawl new GGUFs
+
+`harness/crawl_bench.py` lists **newly updated** repos from the Hugging Face publishers the host agent already allowlists, records a candidate ledger, fit-filters by class RAM, and calls `run_one` for one new `Q4_K_M` file when a lab node is configured. Metadata only: no weight download, no plane POST, no invented tok/s. See [docs/CRAWL_BENCH.md](docs/CRAWL_BENCH.md).
+
+```bash
+python3 harness/crawl_bench.py --repo-limit 1 --publishers bartowski --bench-limit 1
+```
+
 OCI thin runtime (preferred under ~9.9 GiB free — do not bake the GGUF):
 
 ```bash
@@ -136,12 +144,13 @@ models/                 # AGX batch-12 bench matrix (pinned sha256)
 recipes/gguf/           # pull (accepts --model-id / --sha256) + sm_87 llama.cpp build
 recipes/oci/            # Dockerfile + entrypoint + ghcr push
 recipes/power/          # tegrastats sampler + wall-watt procedure
-harness/                # phase1_soak, run_one, llama-bench / TTFT, job-result adapter
+harness/                # phase1_soak, run_one, crawl_bench, llama-bench / TTFT
 scripts/phase1_soak.sh  # Host-job-shaped CLI wrapper
-out/                    # gitignored results — file soaks here (PHASE1_SOAK.md)
+out/                    # gitignored results — soaks and crawl ledger (CRAWL_BENCH.md)
 docs/SCORECARD.md       # field SoT
 docs/PHASE1_SOAK.md     # automated entrypoint + manual appendix
 docs/HOST_JOB.md        # path_b → entrypoint; validation override consume-only
+docs/CRAWL_BENCH.md     # new GGUF crawl → fit → run_one
 docs/DASHBOARDS.md      # per-host / class UI notes (not this repo's job)
 ```
 
