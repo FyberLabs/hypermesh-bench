@@ -26,7 +26,7 @@ Discovery is `GET /api/models?author={publisher}&sort=lastModified&direction=-1`
    | `nx-volume` | `nx-volume` | 16 GiB | 2 GiB | none in this repo |
    | `thor` | `thor` | 128 GiB | 6 GiB | none in this repo |
 
-4. **Bench.** One preferred `Q4_K_M` file per repo (single file, not `N-of-M` shards), up to `--bench-limit`, on the first ready lab node for a class that has a pack. That calls `run_one`. Default is stub (null metrics). `--execute` runs llama-bench only when the binary or image is already on the box. The Hugging Face oid is not copied into `artifact_hash`; that field stays null until a host pull verifies the file.
+4. **Bench.** One preferred `Q4_K_M` file per repo (single file, not `N-of-M` shards), up to `--bench-limit`, on the first ready AGX (`agx-large` / `fyber-agx-orin-64gb`). Other classes stay fit-only. That calls `run_one`. Default is stub (null metrics, no preflight). `--execute` runs panopticon `hypermesh_service.agx_preflight` on this process first and exits 3 when it does not pass, then llama-bench only when the binary or image is already on the box. The Hugging Face oid is not copied into `artifact_hash`; that field stays null until a host pull verifies the file.
 
 Rows already pinned in `models/*.yaml` or `catalog/*.yaml` are `known` and are not benched. Missing LFS oid is `no_hash` (the host pull refuses an unpinned file). Shards are recorded and not benched.
 

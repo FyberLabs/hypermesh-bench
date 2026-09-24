@@ -14,9 +14,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "harness"))
 
+from agx_gate import PreflightClosed  # noqa: E402
 from run_one import run_one  # noqa: E402
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "llama-bench-sample.json"
+
+
+def _preflight_ok() -> dict:
+    return {"ok": True, "checks": []}
 
 
 class RunOneExecuteTest(unittest.TestCase):
@@ -42,6 +47,7 @@ class RunOneExecuteTest(unittest.TestCase):
                 models_dir=Path(tmp),
                 binary=fake,
                 loader="gguf",
+                preflight=_preflight_ok,
             )
             card = json.loads(path.read_text(encoding="utf-8"))
             inf = card["inference_sustained"]
@@ -63,6 +69,7 @@ class RunOneExecuteTest(unittest.TestCase):
                     out_dir=Path(tmp) / "out",
                     stub=False,
                     loader="gguf",
+                    preflight=_preflight_ok,
                 )
             finally:
                 if env_bin is not None:
@@ -74,6 +81,41 @@ class RunOneExecuteTest(unittest.TestCase):
             self.assertEqual(raw["status"], "not_run")
             card = json.loads(path.read_text(encoding="utf-8"))
             self.assertIsNone(card["inference_sustained"]["prefill_tok_s_p50"])
+
+    def test_execute_stops_when_preflight_fails(self) -> None:
+        def failed() -> dict:
+            return {"ok": False, "checks": [{"name": "arch", "ok": False}]}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with self.assertRaises(PreflightClosed):
+                run_one(
+                    manifest_path=ROOT / "models" / "agx64-batch12.yaml",
+                    pack_dir=ROOT / "packs" / "thin-v1",
+                    model_id="llama-3.1-8b-q4",
+                    out_dir=Path(tmp) / "out",
+                    stub=False,
+                    loader="gguf",
+                    preflight=failed,
+                )
+            self.assertFalse((Path(tmp) / "out" / "llama-3.1-8b-q4" / "llama-bench.json").exists())
+
+    def test_stub_does_not_call_preflight(self) -> None:
+        called: list[int] = []
+
+        def failed() -> dict:
+            called.append(1)
+            return {"ok": False}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            run_one(
+                manifest_path=ROOT / "models" / "agx64-batch12.yaml",
+                pack_dir=ROOT / "packs" / "thin-v1",
+                model_id="llama-3.1-8b-q4",
+                out_dir=Path(tmp) / "out",
+                stub=True,
+                preflight=failed,
+            )
+        self.assertEqual(called, [])
 
 
 if __name__ == "__main__":

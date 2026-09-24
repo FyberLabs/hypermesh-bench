@@ -184,6 +184,7 @@ class CrawlBenchTest(unittest.TestCase):
         execute: bool = False,
         bench_limit: int = 1,
         publishers: tuple[str, ...] = ("bartowski",),
+        preflight=None,
     ) -> tuple[dict, dict]:
         root = Path(tmp)
         ledger = root / "candidates.jsonl"
@@ -199,6 +200,7 @@ class CrawlBenchTest(unittest.TestCase):
             out_dir=root / "bench",
             ledger_path=ledger,
             pack_root=ROOT,
+            preflight=preflight,
         )
         return summary, load_ledger(ledger)
 
@@ -343,6 +345,65 @@ class CrawlBenchTest(unittest.TestCase):
                 ["thor"],
             )
             self.assertEqual(summary["benched"], 0)
+
+    def test_execute_blocks_when_preflight_fails(self) -> None:
+        repo = "bartowski/Fresh-GGUF"
+        pages = _pages(repo, [_gguf("Fresh-Q4_K_M.gguf", 2 * GIB, SHA_A)])
+        node = LabNode(
+            device_id="lab-node-1",
+            class_id="fyber-agx-orin-64gb",
+            label="AGX64-1",
+            lab=True,
+            enrolled=True,
+            path_b="green",
+            schedule_hold=False,
+        )
+
+        def failed() -> dict:
+            return {"ok": False, "checks": [{"name": "l4t", "ok": False}]}
+
+        with tempfile.TemporaryDirectory() as tmp:
+            summary, ledger = self._run(
+                pages,
+                tmp,
+                nodes=[node],
+                execute=True,
+                preflight=failed,
+            )
+            row = next(iter(ledger.values()))
+            self.assertEqual(row["status"], "blocked_preflight")
+            self.assertEqual(summary["preflight_ok"], False)
+            self.assertIn("l4t", summary["preflight_error"])
+            self.assertEqual(summary["benched"], 0)
+            self.assertFalse((Path(tmp) / "bench").exists() and any((Path(tmp) / "bench").rglob("scorecard.json")))
+
+    def test_stub_does_not_preflight(self) -> None:
+        called: list[int] = []
+
+        def failed() -> dict:
+            called.append(1)
+            return {"ok": False}
+
+        repo = "bartowski/Fresh-GGUF"
+        pages = _pages(repo, [_gguf("Fresh-Q4_K_M.gguf", 2 * GIB, SHA_A)])
+        with tempfile.TemporaryDirectory() as tmp:
+            summary, _ledger = self._run(pages, tmp, preflight=failed)
+            self.assertIsNone(summary["preflight_ok"])
+        self.assertEqual(called, [])
+
+    def test_thor_node_is_not_a_bench_target(self) -> None:
+        from crawl_bench import select_bench_target, classes_that_fit
+
+        fits = classes_that_fit(2 * GIB)
+        thor = LabNode(
+            device_id="thor-1",
+            class_id="thor",
+            lab=True,
+            enrolled=True,
+            path_b="green",
+            schedule_hold=False,
+        )
+        self.assertIsNone(select_bench_target(fits, [thor]))
 
 
 if __name__ == "__main__":

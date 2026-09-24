@@ -2,8 +2,9 @@
 """Run one model from the AGX batch manifest and write a scorecard.
 
 --stub (default, CI): write a schema-valid scorecard with null measurements.
---execute: invoke llama-bench when the binary (or OCI image) exists; map
-real pp*/tg* cells; leave unmeasured fields null. Never invent tok/s.
+--execute: AGX preflight must pass, then invoke llama-bench when the binary
+(or OCI image) exists; map real pp*/tg* cells; leave unmeasured fields null.
+Never invent tok/s. A failed preflight or a non-AGX class exits 3.
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any
 
 try:
@@ -25,6 +27,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HARNESS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HARNESS))
 
+from agx_gate import PreflightClosed, assert_agx_class, run_preflight  # noqa: E402
 from host_probe import apply_to_scorecard, collect as collect_host  # noqa: E402
 from map_llama_bench import (  # noqa: E402
     apply_hot,
@@ -246,6 +249,7 @@ def run_one(
     artifact_hash: str | None = None,
     image_hash: str | None = None,
     host_probe: dict[str, Any] | None = None,
+    preflight: Callable[[], dict[str, Any]] | None = None,
 ) -> Path:
     manifest = load_yaml(manifest_path)
     pack = load_pack(pack_dir)
@@ -254,6 +258,10 @@ def run_one(
 
     dest = out_dir / chosen_id
     dest.mkdir(parents=True, exist_ok=True)
+
+    if not stub:
+        assert_agx_class(str(manifest.get("class_id") or "") or None)
+        run_preflight(preflight)
 
     if stub:
         if not (dest / "llama-bench.json").exists():
@@ -346,23 +354,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.stub:
         stub = True
 
-    path = run_one(
-        manifest_path=args.manifest,
-        pack_dir=args.pack,
-        model_id=args.model_id,
-        out_dir=args.out,
-        skip_reason=args.skip_reason,
-        stub=stub,
-        require_bench=args.require_bench,
-        model_path=args.model,
-        models_dir=args.models_dir,
-        image=args.image,
-        binary=args.binary,
-        device_id=args.device_id,
-        loader=args.loader,
-        artifact_hash=args.artifact_hash,
-        image_hash=args.image_hash,
-    )
+    try:
+        path = run_one(
+            manifest_path=args.manifest,
+            pack_dir=args.pack,
+            model_id=args.model_id,
+            out_dir=args.out,
+            skip_reason=args.skip_reason,
+            stub=stub,
+            require_bench=args.require_bench,
+            model_path=args.model,
+            models_dir=args.models_dir,
+            image=args.image,
+            binary=args.binary,
+            device_id=args.device_id,
+            loader=args.loader,
+            artifact_hash=args.artifact_hash,
+            image_hash=args.image_hash,
+        )
+    except PreflightClosed as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
     print(path)
     return 0
 

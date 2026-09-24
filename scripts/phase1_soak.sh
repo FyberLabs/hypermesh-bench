@@ -50,7 +50,7 @@ Host-job env (run only when Host pulled kind=path_b thin-v1):
 Exit codes:
   0  scorecard written; Path B green (or --stub without --require-path-b)
   2  measured / written but Path B enroll rules red
-  3  setup / disk / pin / wrong job kind
+  3  setup / disk / pin / wrong job kind / AGX preflight failed
   4  skipped (no validation window / preempt denied)
 
 Disk: refuse if models volume free < pin size_bytes + 2 GiB headroom.
@@ -97,6 +97,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+
+if [[ "$STUB" -ne 1 ]]; then
+  "$PYTHON" -c 'import sys; sys.path.insert(0, sys.argv[1]); from agx_gate import gate_execute; gate_execute()' "$ROOT/harness" || exit 3
+fi
 
 if [[ "$STUB" -ne 1 && "$NO_NVP" -ne 1 ]]; then
   if command -v nvpmodel >/dev/null 2>&1; then

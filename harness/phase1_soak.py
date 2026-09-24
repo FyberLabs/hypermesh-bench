@@ -31,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HARNESS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HARNESS))
 
+from agx_gate import PreflightClosed, assert_agx_class, run_preflight  # noqa: E402
 from check_scorecard import check_file, load_json as load_schema_json  # noqa: E402
 from emit_job_result import emit as emit_job_result  # noqa: E402
 from host_probe import collect as collect_host, write_probe  # noqa: E402
@@ -303,6 +304,14 @@ def run_soak(args: argparse.Namespace) -> int:
     skip_pull = args.skip_pull or stub
     skip_hot = args.skip_hot_window or stub
 
+    if not stub:
+        try:
+            assert_agx_class(class_id)
+            run_preflight()
+        except PreflightClosed as exc:
+            print(str(exc), file=sys.stderr)
+            return EXIT_SETUP
+
     if not manifest_path.is_file():
         print(f"error: manifest not found: {manifest_path}", file=sys.stderr)
         return EXIT_SETUP
@@ -401,6 +410,9 @@ def run_soak(args: argparse.Namespace) -> int:
             image_hash=image_hash,
             host_probe=probe,
         )
+    except PreflightClosed as exc:
+        print(str(exc), file=sys.stderr)
+        return EXIT_SETUP
     except SystemExit as exc:
         print(exc, file=sys.stderr)
         return EXIT_SETUP

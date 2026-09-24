@@ -107,6 +107,23 @@ class Phase1SoakTest(unittest.TestCase):
         code = phase1_main(["--stub", "--job-kind", "lease_stop", "--out", "/tmp/x"])
         self.assertEqual(code, EXIT_SETUP)
 
+    def test_execute_fails_closed_on_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            code = phase1_main(["--out", tmp])
+        self.assertEqual(code, EXIT_SETUP)
+
+    def test_script_without_stub_fails_closed(self) -> None:
+        script = ROOT / "scripts" / "phase1_soak.sh"
+        with tempfile.TemporaryDirectory() as tmp:
+            proc = subprocess.run(
+                [str(script), "--out", tmp],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(proc.returncode, EXIT_SETUP)
+        self.assertIn("preflight", (proc.stderr + proc.stdout).lower())
+
 
 if __name__ == "__main__":
     unittest.main()

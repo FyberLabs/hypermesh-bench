@@ -26,6 +26,7 @@ import urllib.request
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
+from collections.abc import Callable
 from typing import Any, Protocol
 from urllib.parse import quote
 
@@ -37,6 +38,8 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HARNESS))
+
+from agx_gate import PreflightClosed, run_preflight  # noqa: E402
 
 DEPOT_HUGGINGFACE = "huggingface"
 HF_API = "https://huggingface.co/api/models"
@@ -129,8 +132,9 @@ CLASS_ALIASES = {
     "thor": "thor",
 }
 
-# Prefer the class that has a bench pack when several classes fit.
-_BENCH_CLASS_ORDER = ("agx-large", "nx-volume", "thor")
+# Fit records every class. Only the AGX pack is runnable.
+_FIT_CLASS_ORDER = ("agx-large", "nx-volume", "thor")
+_BENCH_CLASS_ORDER = ("agx-large",)
 
 
 class CrawlError(Exception):
@@ -397,7 +401,7 @@ def fits_class(plane: str, size_bytes: int) -> FitRow | None:
 
 def classes_that_fit(size_bytes: int) -> list[FitRow]:
     rows: list[FitRow] = []
-    for plane in _BENCH_CLASS_ORDER:
+    for plane in _FIT_CLASS_ORDER:
         row = fits_class(plane, size_bytes)
         if row is not None and row.fits:
             rows.append(row)
@@ -725,6 +729,7 @@ def run_crawl(
     ledger_path: Path,
     pack_root: Path | None = None,
     now: datetime | None = None,
+    preflight: Callable[[], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     errors: list[str] = []
     artifacts = discover_huggingface(
@@ -772,6 +777,16 @@ def run_crawl(
         key=lambda repo: by_repo[repo][0]["artifact"].last_modified or "",
         reverse=True,
     )
+    preflight_ok: bool | None = None
+    preflight_error = ""
+    if execute:
+        try:
+            run_preflight(preflight)
+            preflight_ok = True
+        except PreflightClosed as exc:
+            preflight_ok = False
+            preflight_error = str(exc)
+
     slots = 0
     for repo in repo_order:
         if slots >= bench_limit:
@@ -782,6 +797,10 @@ def run_crawl(
         if _keep_prior_bench(pick["prior"], artifact.sha256, execute):
             pick["status"] = "benched"
             pick["bench"] = pick["prior"].get("bench")
+            continue
+        if preflight_ok is False:
+            pick["status"] = "blocked_preflight"
+            pick["bench"] = {"mode": "blocked", "reason": preflight_error}
             continue
         target = select_bench_target(pick["fits"], nodes)
         if target is None:
@@ -851,7 +870,7 @@ def run_crawl(
         if status == "benched" and record["bench"] is None and row.get("prior"):
             record["bench"] = row["prior"].get("bench")
         rows[artifact.source_ref] = record
-        if status in {"benched", "skipped_no_node", "skipped_no_pack"}:
+        if status in {"benched", "skipped_no_node", "skipped_no_pack", "blocked_preflight"}:
             results.append(
                 {
                     "source_ref": artifact.source_ref,
@@ -869,6 +888,8 @@ def run_crawl(
         "repo_limit": repo_limit,
         "bench_limit": bench_limit,
         "bench_mode": "execute" if execute else "stub",
+        "preflight_ok": preflight_ok,
+        "preflight_error": preflight_error,
         "nodes_configured": len(nodes),
         "errors": errors,
         **counts,
@@ -997,6 +1018,9 @@ def main(argv: list[str] | None = None) -> int:
     args.summary.parent.mkdir(parents=True, exist_ok=True)
     args.summary.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
     print(args.summary)
+    if summary.get("preflight_ok") is False:
+        print(summary.get("preflight_error") or "AGX preflight failed closed", file=sys.stderr)
+        return 3
     return 0
 
 
