@@ -105,7 +105,7 @@ Empty required enroll fields fail Path B. **Unmeasured metrics stay `null`.** Do
 | `power.json` | wall meter or labeled INA/tegrastats proxy | idle_w, load_w, method |
 | `identity.json` | sha256sum + `docker inspect` | `artifact_hash`, `image_hash` (`repo@digest` for oci) |
 | `reliability.json` | soak supervisor | reboot count, OOM kills, unexpected restart |
-| `host_probe.json` | `harness/host_probe.py` | L4T, CUDA, nvpmodel, disk_free_gib, jetson_clocks (null off-box) |
+| `host_probe.json` | `harness/host_probe.py` | L4T, CUDA, nvpmodel, disk_free_gib, jetson_clocks. The CLI exits 3 unless AGX preflight passes; it does not write nulls. Stub soaks still leave unmeasured fields null. |
 | `job_result.json` | `harness/emit_job_result.py` | `{passed, image_hash?}` for the existing Host POST — no new URL |
 
 ## Pass / fail (`thin-v1`, proposed)

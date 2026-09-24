@@ -8,10 +8,12 @@ AIuditor crawl.GGUF_PUBLISHER_ALLOWLIST.
 
 Fit numbers match AIuditor fit.py: file size + 1.5 GiB KV headroom against
 class RAM after OS reserve. The bench pack in this repo is thin-v1 on
-fyber-agx-orin-64gb (plane class agx-large). Other classes are fit-only.
+fyber-agx-orin-64gb (plane class agx-large). nx-volume and thor are fit-only.
+They are not soak hardware.
 
-Lab nodes come from HM_LAB_NODES, nodes/lab.yaml, or HM_DEVICE_ID. Incomplete
-rows are not ready. This process does not invent device ids or addresses.
+``--execute`` soaks only the enrolled known host (AGX64-1) after AGX
+preflight. ``HM_DEVICE_ID`` does not enroll a host and does not start a soak.
+Stub mode does not call preflight and does not start llama-bench.
 """
 
 from __future__ import annotations
@@ -37,6 +39,15 @@ except ImportError:  # pragma: no cover
 ROOT = Path(__file__).resolve().parents[1]
 HARNESS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HARNESS))
+
+from soak_gate import (  # noqa: E402
+    KNOWN_CLASS,
+    KNOWN_DEVICE_ID,
+    KNOWN_LABEL,
+    SOAK_PLANES,
+    SoakRefused,
+    assert_ready_for_soak,
+)
 
 DEPOT_HUGGINGFACE = "huggingface"
 HF_API = "https://huggingface.co/api/models"
@@ -454,26 +465,10 @@ def load_nodes(path: Path) -> list[LabNode]:
 
 
 def node_from_env(env: dict[str, str] | None = None) -> LabNode | None:
-    """HM_DEVICE_ID means this process is that lab host. No address is read."""
+    """HM_DEVICE_ID does not enroll a host and does not start a soak."""
 
-    source = env if env is not None else os.environ
-    device_id = (source.get("HM_DEVICE_ID") or "").strip()
-    if not device_id:
-        return None
-    class_id = (source.get("HM_CLASS_ID") or "fyber-agx-orin-64gb").strip()
-    path_b = (source.get("HM_PATH_B_STATE") or "green").strip().lower()
-    hold = (source.get("HM_SCHEDULE_HOLD") or "").strip().lower() in {"1", "true", "yes"}
-    label = (source.get("HM_NODE_LABEL") or "").strip() or None
-    return LabNode(
-        device_id=device_id,
-        class_id=class_id,
-        label=label,
-        lab=True,
-        enrolled=True,
-        path_b=path_b,
-        schedule_hold=hold,
-        created_at="",
-    )
+    del env
+    return None
 
 
 def resolve_nodes(path: Path | None, env: dict[str, str] | None = None) -> list[LabNode]:
@@ -486,8 +481,7 @@ def resolve_nodes(path: Path | None, env: dict[str, str] | None = None) -> list[
     default = ROOT / "nodes" / "lab.yaml"
     if default.is_file():
         return load_nodes(default)
-    node = node_from_env(source)
-    return [node] if node is not None else []
+    return []
 
 
 def is_ready(node: LabNode, plane: str) -> bool:
@@ -511,7 +505,8 @@ def select_bench_target(
     fits: list[FitRow], nodes: list[LabNode]
 ) -> tuple[FitRow, LabNode] | None:
     by_class = {row.plane_class_id: row for row in fits}
-    for plane in _BENCH_CLASS_ORDER:
+    # Only the AGX pack soaks. nx-volume and thor stay fit rows.
+    for plane in ("agx-large",):
         row = by_class.get(plane)
         budget = CLASS_BUDGETS.get(plane)
         if row is None or budget is None or not budget.pack_rel:
@@ -662,6 +657,12 @@ def bench_artifact(
 
     from run_one import run_one
 
+    if budget.plane_class_id not in SOAK_PLANES:
+        return {"mode": "skipped", "reason": "only the AGX soaks"}
+    if execute and node.device_id != KNOWN_DEVICE_ID:
+        raise SoakRefused(
+            "soak refused: only the enrolled AGX known host can execute a soak"
+        )
     if not budget.pack_rel:
         return {"mode": "skipped", "reason": "no bench pack"}
     pack_dir = pack_root / budget.pack_rel
@@ -967,12 +968,14 @@ def main(argv: list[str] | None = None) -> int:
         "--nodes",
         type=Path,
         default=None,
-        help="Lab node list. Default: HM_LAB_NODES, else nodes/lab.yaml, else HM_DEVICE_ID",
+        help="Lab node list for stub runs. Default: HM_LAB_NODES, else nodes/lab.yaml. "
+        "--execute ignores this and uses the enrolled known host",
     )
     parser.add_argument(
         "--execute",
         action="store_true",
-        help="Call run_one --execute. Does not download weights. Default is --stub",
+        help="Soak the enrolled known host after AGX preflight. "
+        "Does not download weights. Default is --stub",
     )
     args = parser.parse_args(argv)
     if args.repo_limit < 1:
@@ -981,7 +984,25 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit("--bench-limit must be >= 0")
 
     publishers = _publishers_from_arg(args.publishers)
-    nodes = resolve_nodes(args.nodes)
+    if args.execute:
+        try:
+            ready = assert_ready_for_soak(None)
+        except SoakRefused as exc:
+            print(str(exc), file=sys.stderr)
+            return 3
+        nodes = [
+            LabNode(
+                device_id=str(ready["device_id"]),
+                class_id=KNOWN_CLASS,
+                label=KNOWN_LABEL,
+                lab=True,
+                enrolled=True,
+                path_b="green",
+                schedule_hold=False,
+            )
+        ]
+    else:
+        nodes = resolve_nodes(args.nodes)
     summary = run_crawl(
         fetch=UrlFetcher(token=_token_from_env()),
         publishers=publishers,

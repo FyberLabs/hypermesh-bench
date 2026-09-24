@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Probe JetPack/L4T host facts for a Path B scorecard.
 
-Reads only what is on this box. Unmeasured fields stay null. Does not
-invent JetPack strings, CUDA versions, watts, or hashes.
+The CLI runs AGX preflight and requires the enrolled known host. A failure
+exits 3 and does not write a null probe. ``collect`` still returns nulls for
+fields this process cannot measure; stub soaks use that. This CLI does not.
 """
 
 from __future__ import annotations
@@ -260,22 +261,36 @@ def write_probe(path: Path, probe: dict[str, Any]) -> Path:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from soak_gate import SoakRefused, apply_probe_facts, assert_ready_for_soak
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--models-dir", type=Path, default=None)
     parser.add_argument("--out-dir", type=Path, default=None)
-    parser.add_argument("--device-id", default=os.environ.get("HM_DEVICE_ID") or None)
+    parser.add_argument(
+        "--device-id",
+        default=os.environ.get("HM_DEVICE_ID") or None,
+        help="Must match the enrolled known host. HM_DEVICE_ID alone does not enroll",
+    )
     parser.add_argument(
         "--write",
         type=Path,
         default=None,
-        help="Write host_probe.json here (default: stdout)",
+        help="Write host_probe.json here after preflight passes (default: stdout)",
     )
     args = parser.parse_args(argv)
+    try:
+        ready = assert_ready_for_soak(args.device_id)
+    except SoakRefused as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
+    device_id = str(ready["device_id"])
     probe = collect(
         models_dir=args.models_dir,
         out_dir=args.out_dir,
-        device_id=args.device_id,
+        device_id=device_id,
     )
+    apply_probe_facts(probe, ready["facts"], device_id)
+    probe["preflight"] = ready["preflight"]
     if args.write:
         write_probe(args.write, probe)
         print(args.write)

@@ -12,11 +12,13 @@ One command on AGX64-1 (JetPack host). **Only** Host, after it pulls `kind=path_
 
 **Plane door** (panopticon#108 — Product sign-off): the control plane opens the certification window. Exact Create body (plane operator, **not** this script): see [HOST_JOB.md](HOST_JOB.md). `preempt` defaults `true`; `suite_id` is not in the body (plane picks `path_b` / `thin-v1`). Host then `GET /agent/jobs` → `phase1_soak` → job result → auto-restore. No hand `lease_stop`.
 
+A real run fails closed before llama-bench unless AGX preflight passes and `/var/lib/hypermesh/device.json` is enrolled known host AGX64-1 (`a6400000-0640-4000-8000-000000000001`). `HM_DEVICE_ID` does not skip that gate. `--stub` does not start a bench.
+
 ```bash
 ./scripts/phase1_soak.sh \
   --model-id llama-3.1-8b-q4 \
   --pack packs/thin-v1 \
-  --device-id f6124d28-772c-4f1f-8e03-1a7a17724381 \
+  --device-id a6400000-0640-4000-8000-000000000001 \
   --out "out/$(hostname)-$(date +%Y%m%d)" \
   --loader gguf
 ```
@@ -30,7 +32,7 @@ Dry-run (CI / no GPU; schema-valid scorecard + `job_result.json` with nulls):
 What the driver does:
 
 1. Consume the existing `path_b` job env (`HM_JOB_KIND`, `HM_SUITE_ID`, `HM_CATALOG_ID`, `HM_DEVICE_ID`, …). Exit **4** if `HM_VALIDATION_WINDOW` is denied / no hold. Do not POST the host-certification override or `lease_stop` from this script.
-2. Probe host (L4T, CUDA, `nvpmodel`, disk, `jetson_clocks`) → `host_probe.json` + scorecard `host.*`.
+2. On a real run, AGX preflight then the enrolled known host. Exit **3** on failure and do not start the bench. Then probe host → `host_probe.json` + scorecard `host.*`. `--stub` still leaves unmeasured host fields null.
 3. Disk gate: models volume free must be ≥ pin `size_bytes` + **2 GiB** headroom. On ~9.9 GiB free, pull GGUF **once** and use a **thin** OCI runtime (binaries only). Do not bake the GGUF into the image and keep a second local copy.
 4. Ensure 30W / `nvpmodel` 2 (sudo from the wrapper when not `--stub`).
 5. Pull or reuse the pinned GGUF (`pull-gguf.sh --model-id`; refuses TBD). Verified sha256 → `identity.artifact_hash`.

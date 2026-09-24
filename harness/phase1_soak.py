@@ -34,6 +34,7 @@ sys.path.insert(0, str(HARNESS))
 from check_scorecard import check_file, load_json as load_schema_json  # noqa: E402
 from emit_job_result import emit as emit_job_result  # noqa: E402
 from host_probe import collect as collect_host, write_probe  # noqa: E402
+from soak_gate import SoakRefused, apply_probe_facts, assert_ready_for_soak  # noqa: E402
 from run_llama_bench import inspect_image_digest  # noqa: E402
 from run_one import find_model, load_pack, load_yaml, run_one  # noqa: E402
 from ttft_client import run_ttft  # noqa: E402
@@ -323,6 +324,15 @@ def run_soak(args: argparse.Namespace) -> int:
         print(f"error: refuse unpinned sha256 for {model_id}: {pin!r}", file=sys.stderr)
         return EXIT_SETUP
 
+    ready = None
+    if not stub:
+        try:
+            ready = assert_ready_for_soak(device_id)
+        except SoakRefused as exc:
+            print(str(exc), file=sys.stderr)
+            return EXIT_SETUP
+        device_id = str(ready["device_id"])
+
     dest = out_root / model_id
     dest.mkdir(parents=True, exist_ok=True)
 
@@ -332,6 +342,9 @@ def run_soak(args: argparse.Namespace) -> int:
         device_id=device_id,
         class_id=class_id,
     )
+    if ready is not None:
+        apply_probe_facts(probe, ready["facts"], device_id)
+        probe["preflight"] = ready["preflight"]
     write_probe(dest / "host_probe.json", probe)
 
     model_path = resolve_model_file(model, models_dir)

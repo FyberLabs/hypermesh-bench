@@ -13,16 +13,41 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "harness"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
+from agx_facts import EnrolledHost  # noqa: E402
 from run_one import run_one  # noqa: E402
+from soak_gate import SoakRefused  # noqa: E402
 
 FIXTURE = Path(__file__).resolve().parent / "fixtures" / "llama-bench-sample.json"
 
 
 class RunOneExecuteTest(unittest.TestCase):
+    def test_execute_refuses_when_preflight_fails(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            with self.assertRaises(SoakRefused):
+                run_one(
+                    manifest_path=ROOT / "models" / "agx64-batch12.yaml",
+                    pack_dir=ROOT / "packs" / "thin-v1",
+                    model_id="llama-3.1-8b-q4",
+                    out_dir=out,
+                    stub=False,
+                    loader="gguf",
+                    device_id="dev-not-enrolled",
+                )
+            self.assertFalse((out / "llama-3.1-8b-q4" / "llama-bench.json").exists())
+
     def test_execute_with_fake_binary_maps_prefill_not_sustained(self) -> None:
         fixture = FIXTURE.read_text(encoding="utf-8")
         with tempfile.TemporaryDirectory() as tmp:
+            enrolled = EnrolledHost(Path(tmp))
+            try:
+                self._execute_maps(tmp, fixture)
+            finally:
+                enrolled.close()
+
+    def _execute_maps(self, tmp: str, fixture: str) -> None:
             fake = Path(tmp) / "llama-bench"
             fake.write_text(
                 "#!/bin/sh\ncat <<'EOF'\n" + fixture + "\nEOF\n",
@@ -50,9 +75,21 @@ class RunOneExecuteTest(unittest.TestCase):
             self.assertIsNone(inf["decode_tok_s_p50_after_throttle"])
             self.assertIsNone(inf["ttft_ms_p50_after_throttle"])
             self.assertIsNot(card["run"]["passed"], True)
+            self.assertEqual(card["host"]["jetpack_l4t"], "R39.2.1")
+            self.assertEqual(card["host"]["cuda"], "13.2.1")
+            self.assertEqual(card["host"]["nvpmodel_id"], 2)
+            self.assertIs(card["host"]["jetson_clocks"], False)
+            self.assertEqual(card["run"]["device_id"], "a6400000-0640-4000-8000-000000000001")
 
     def test_execute_without_binary_writes_not_run(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
+            enrolled = EnrolledHost(Path(tmp))
+            try:
+                self._execute_without_binary(tmp)
+            finally:
+                enrolled.close()
+
+    def _execute_without_binary(self, tmp: str) -> None:
             env_bin = os.environ.pop("LLAMA_BENCH", None)
             env_dir = os.environ.pop("LLAMA_BIN_DIR", None)
             try:

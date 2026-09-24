@@ -2,8 +2,8 @@
 """Run one model from the AGX batch manifest and write a scorecard.
 
 --stub (default, CI): write a schema-valid scorecard with null measurements.
---execute: invoke llama-bench when the binary (or OCI image) exists; map
-real pp*/tg* cells; leave unmeasured fields null. Never invent tok/s.
+--execute: AGX preflight and the enrolled known host, then llama-bench.
+A failed preflight does not start the bench. Never invent tok/s.
 """
 
 from __future__ import annotations
@@ -26,6 +26,7 @@ HARNESS = Path(__file__).resolve().parent
 sys.path.insert(0, str(HARNESS))
 
 from host_probe import apply_to_scorecard, collect as collect_host  # noqa: E402
+from soak_gate import SoakRefused, apply_probe_facts, assert_ready_for_soak  # noqa: E402
 from map_llama_bench import (  # noqa: E402
     apply_hot,
     apply_map,
@@ -252,6 +253,11 @@ def run_one(
     chosen_id = model_id or manifest.get("first_model_id") or "llama-3.1-8b-q4"
     model = find_model(manifest, chosen_id)
 
+    ready: dict[str, Any] | None = None
+    if not stub:
+        ready = assert_ready_for_soak(device_id)
+        device_id = str(ready["device_id"])
+
     dest = out_dir / chosen_id
     dest.mkdir(parents=True, exist_ok=True)
 
@@ -270,16 +276,21 @@ def run_one(
             require_bench=require_bench,
         )
 
-    if host_probe is None and (dest / "host_probe.json").exists() is False:
+    probe_path = dest / "host_probe.json"
+    if host_probe is None and probe_path.is_file() is False:
         host_probe = collect_host(
             models_dir=models_dir,
             out_dir=dest,
             device_id=device_id,
             class_id=manifest.get("class_id") or "fyber-agx-orin-64gb",
         )
-        (dest / "host_probe.json").write_text(
-            json.dumps(host_probe, indent=2) + "\n", encoding="utf-8"
-        )
+    if ready is not None:
+        if host_probe is None:
+            host_probe = _load_json(probe_path) or {}
+        apply_probe_facts(host_probe, ready["facts"], device_id or "")
+        host_probe["preflight"] = ready["preflight"]
+    if host_probe is not None and (ready is not None or probe_path.is_file() is False):
+        probe_path.write_text(json.dumps(host_probe, indent=2) + "\n", encoding="utf-8")
 
     scorecard = assemble_scorecard(
         dest=dest,
@@ -335,7 +346,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--models-dir", type=Path, default=None)
     parser.add_argument("--image", default=os.environ.get("HM_IMAGE_DIGEST") or None)
     parser.add_argument("--binary", type=Path, default=None)
-    parser.add_argument("--device-id", default=os.environ.get("HM_DEVICE_ID") or None)
+    parser.add_argument(
+        "--device-id",
+        default=os.environ.get("HM_DEVICE_ID") or None,
+        help="Must be the enrolled known host on --execute. HM_DEVICE_ID alone does not enroll",
+    )
     parser.add_argument("--loader", choices=("gguf", "oci"), default=None)
     parser.add_argument("--artifact-hash", default=None)
     parser.add_argument("--image-hash", default=None)
@@ -346,23 +361,27 @@ def main(argv: list[str] | None = None) -> int:
     if args.stub:
         stub = True
 
-    path = run_one(
-        manifest_path=args.manifest,
-        pack_dir=args.pack,
-        model_id=args.model_id,
-        out_dir=args.out,
-        skip_reason=args.skip_reason,
-        stub=stub,
-        require_bench=args.require_bench,
-        model_path=args.model,
-        models_dir=args.models_dir,
-        image=args.image,
-        binary=args.binary,
-        device_id=args.device_id,
-        loader=args.loader,
-        artifact_hash=args.artifact_hash,
-        image_hash=args.image_hash,
-    )
+    try:
+        path = run_one(
+            manifest_path=args.manifest,
+            pack_dir=args.pack,
+            model_id=args.model_id,
+            out_dir=args.out,
+            skip_reason=args.skip_reason,
+            stub=stub,
+            require_bench=args.require_bench,
+            model_path=args.model,
+            models_dir=args.models_dir,
+            image=args.image,
+            binary=args.binary,
+            device_id=args.device_id,
+            loader=args.loader,
+            artifact_hash=args.artifact_hash,
+            image_hash=args.image_hash,
+        )
+    except SoakRefused as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
     print(path)
     return 0
 
