@@ -107,6 +107,41 @@ class Phase1SoakTest(unittest.TestCase):
         code = phase1_main(["--stub", "--job-kind", "lease_stop", "--out", "/tmp/x"])
         self.assertEqual(code, EXIT_SETUP)
 
+    def test_real_soak_fails_closed_before_bench(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            code = phase1_main(
+                [
+                    "--out",
+                    str(out),
+                    "--models-dir",
+                    str(Path(tmp) / "models"),
+                    "--device-id",
+                    "f6124d28-772c-4f1f-8e03-1a7a17724381",
+                ]
+            )
+            self.assertEqual(code, EXIT_SETUP)
+            self.assertFalse((out / "llama-3.1-8b-q4" / "llama-bench.json").exists())
+
+    def test_soak_script_runs_preflight_before_the_driver(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            proc = subprocess.run(
+                [
+                    str(ROOT / "scripts" / "phase1_soak.sh"),
+                    "--out",
+                    str(out),
+                    "--models-dir",
+                    str(Path(tmp) / "models"),
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(proc.returncode, EXIT_SETUP)
+            self.assertIn("AGX preflight failed closed", proc.stderr)
+            self.assertFalse((out / "llama-3.1-8b-q4" / "scorecard.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -45,7 +45,7 @@ Job fields Host already has (`hypermesh-host` `api.Job`): `job_id`, `kind`, `dev
 | `kind=path_b` / `HM_JOB_KIND` | Only accepted kind. `lease_stop` / `lease_start` / chat → setup fail (exit 3) |
 | `suite_id` empty or `thin-v1` / `HM_SUITE_ID` | `packs/thin-v1` |
 | `catalog_id` / `HM_CATALOG_ID` | `--model-id` (Phase 1: `llama-3.1-8b-q4`) |
-| `device_id` / `HM_DEVICE_ID` | `--device-id` → `run.device_id` |
+| `device_id` / `HM_DEVICE_ID` | `--device-id` → `run.device_id`. A real soak requires this to be enrolled AGX64-1. The env var alone does not enroll or skip preflight. |
 | `image_digest` / `HM_IMAGE_DIGEST` | Optional OCI pin when `--loader oci` |
 | class | `HM_CLASS_ID=fyber-agx-orin-64gb` |
 | models / out | `HM_MODELS_DIR`, `HM_OUT_DIR` |
@@ -64,7 +64,7 @@ Create (AGX64-1). `preempt` defaults `true` if omitted. **`suite_id` is not in t
 POST /api/v1/hypermesh/host-certification/overrides
 Authorization: Bearer <portal tenant-session JWT>
 X-Tenant-ID: <marketplace tenant>
-{"device_id":"f6124d28-772c-4f1f-8e03-1a7a17724381","preempt":true}
+{"device_id":"a6400000-0640-4000-8000-000000000001","preempt":true}
 ```
 
 Then:

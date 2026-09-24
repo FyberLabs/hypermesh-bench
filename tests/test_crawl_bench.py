@@ -24,8 +24,10 @@ from crawl_bench import (  # noqa: E402
     hf_tree_url,
     load_ledger,
     make_catalog_id,
+    main as crawl_main,
     node_from_env,
     run_crawl,
+    select_bench_target,
     select_lab_node,
     sha256_hex,
 )
@@ -163,14 +165,45 @@ class NodeSelectTest(unittest.TestCase):
         assert picked is not None
         self.assertEqual(picked.device_id, "older")
 
-    def test_env_node_uses_device_id_only(self) -> None:
-        node = node_from_env({"HM_DEVICE_ID": "dev-1", "HM_CLASS_ID": "agx-large"})
-        self.assertIsNotNone(node)
-        assert node is not None
-        self.assertEqual(node.device_id, "dev-1")
-        self.assertTrue(node.lab)
-        self.assertEqual(node.path_b, "green")
+    def test_device_id_env_does_not_enroll(self) -> None:
+        self.assertIsNone(
+            node_from_env({"HM_DEVICE_ID": "dev-1", "HM_CLASS_ID": "agx-large"})
+        )
         self.assertIsNone(node_from_env({}))
+
+    def test_only_agx_is_a_soak_target(self) -> None:
+        fits = classes_that_fit(1 * GIB)
+        thor = LabNode(
+            device_id="a6400000-0640-4000-8000-000000000001",
+            class_id="thor",
+            lab=True,
+            enrolled=True,
+            path_b="green",
+            schedule_hold=False,
+        )
+        nx = LabNode(
+            device_id="nx-1",
+            class_id="nx-volume",
+            lab=True,
+            enrolled=True,
+            path_b="green",
+            schedule_hold=False,
+        )
+        self.assertIsNone(select_bench_target(fits, [thor, nx]))
+        agx = LabNode(
+            device_id="a6400000-0640-4000-8000-000000000001",
+            class_id="agx-large",
+            label="AGX64-1",
+            lab=True,
+            enrolled=True,
+            path_b="green",
+            schedule_hold=False,
+        )
+        picked = select_bench_target(fits, [thor, nx, agx])
+        self.assertIsNotNone(picked)
+        assert picked is not None
+        self.assertEqual(picked[0].plane_class_id, "agx-large")
+        self.assertEqual(picked[1].device_id, agx.device_id)
 
 
 class CrawlBenchTest(unittest.TestCase):
@@ -343,6 +376,30 @@ class CrawlBenchTest(unittest.TestCase):
                 ["thor"],
             )
             self.assertEqual(summary["benched"], 0)
+
+    def test_execute_refuses_before_bench(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            code = crawl_main(
+                [
+                    "--execute",
+                    "--repo-limit",
+                    "1",
+                    "--bench-limit",
+                    "1",
+                    "--publishers",
+                    "bartowski",
+                    "--ledger",
+                    str(root / "candidates.jsonl"),
+                    "--summary",
+                    str(root / "summary.json"),
+                    "--out",
+                    str(root / "bench"),
+                ]
+            )
+            self.assertEqual(code, 3)
+            self.assertFalse((root / "candidates.jsonl").exists())
+            self.assertFalse((root / "bench").exists())
 
 
 if __name__ == "__main__":

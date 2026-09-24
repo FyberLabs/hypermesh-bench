@@ -26,34 +26,24 @@ Discovery is `GET /api/models?author={publisher}&sort=lastModified&direction=-1`
    | `nx-volume` | `nx-volume` | 16 GiB | 2 GiB | none in this repo |
    | `thor` | `thor` | 128 GiB | 6 GiB | none in this repo |
 
-4. **Bench.** One preferred `Q4_K_M` file per repo (single file, not `N-of-M` shards), up to `--bench-limit`, on the first ready lab node for a class that has a pack. That calls `run_one`. Default is stub (null metrics). `--execute` runs llama-bench only when the binary or image is already on the box. The Hugging Face oid is not copied into `artifact_hash`; that field stays null until a host pull verifies the file.
+4. **Bench.** One preferred `Q4_K_M` file per repo (single file, not `N-of-M` shards), up to `--bench-limit`. Only `agx-large` soaks. `nx-volume` and `thor` stay fit rows. Default is stub (null metrics, no preflight). `--execute` runs AGX preflight and requires `/var/lib/hypermesh/device.json` to be enrolled known host AGX64-1 (`a6400000-0640-4000-8000-000000000001`), then calls `run_one`. A failed check exits 3 and does not start llama-bench. The Hugging Face oid is not copied into `artifact_hash`.
 
 Rows already pinned in `models/*.yaml` or `catalog/*.yaml` are `known` and are not benched. Missing LFS oid is `no_hash` (the host pull refuses an unpinned file). Shards are recorded and not benched.
 
 ## Lab nodes
 
-Same ready rule as Hypermesh `ready_lab_devices`: `lab`, `enrolled`, `path_b: green`, `schedule_hold: false`, class matches a class the file fits. Oldest `created_at` wins. A row missing `device_id` or `class_id` is ignored. Omitted `lab` / `enrolled` are false. Omitted `schedule_hold` is treated as held.
+Stub runs still record a ready list (`lab`, `enrolled`, `path_b: green`, `schedule_hold: false`). Oldest `created_at` wins. That list does not start a real soak.
 
-```yaml
-nodes:
-  - label: AGX64-1
-    device_id: <enrolled uuid>
-    class_id: agx-large          # or fyber-agx-orin-64gb
-    lab: true
-    enrolled: true
-    path_b: green
-    schedule_hold: false
-    created_at: "2024-01-01T00:00:00Z"
-```
+`--execute` ignores `--nodes`, `HM_LAB_NODES`, `nodes/lab.yaml`, and `HM_DEVICE_ID`. The soak host is the known-host row shared with panopticon `KNOWN_HOSTS` and infra `config/hypermesh-known-hosts.yaml`:
 
-Resolution order:
+| | |
+|---|---|
+| label | AGX64-1 |
+| serial | `FYBER-AGX-ORIN-64-001` |
+| device_id | `a6400000-0640-4000-8000-000000000001` |
+| class | `agx-large` |
 
-1. `--nodes PATH`
-2. `HM_LAB_NODES`
-3. `nodes/lab.yaml` if it exists
-4. `HM_DEVICE_ID` (this process is that host; class defaults to `HM_CLASS_ID` or `fyber-agx-orin-64gb`)
-
-No file and no `HM_DEVICE_ID` means the crawl still records and fit-filters, and bench status is `skipped_no_node`. Do not invent a device id or an SSH address. This command does not SSH.
+The box is enrolled when `/var/lib/hypermesh/device.json` has that device id and a device secret, which is what `lease_harness host` / `scripts/hypermesh-bench-enroll.py` leave after preflight. `HM_DEVICE_ID` does not enroll a host. This command does not SSH.
 
 ## Run
 

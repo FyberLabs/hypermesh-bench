@@ -19,7 +19,8 @@ This script does not POST and does not invent tok/s, watts, or hashes.
 Options:
   --model-id ID          Default: llama-3.1-8b-q4 (or HM_CATALOG_ID)
   --pack DIR             Default: packs/thin-v1
-  --device-id UUID       Or HM_DEVICE_ID
+  --device-id UUID       Must be enrolled known host AGX64-1 on a real soak.
+                         HM_DEVICE_ID alone does not enroll or skip preflight.
   --out DIR              Default: out/$(hostname)-$(date +%Y%m%d) or HM_OUT_DIR
   --loader gguf|oci      Default: gguf (or HM_LOADER). oci needs --image / HM_IMAGE_DIGEST
   --image REF            Thin runtime image (no baked GGUF)
@@ -36,7 +37,8 @@ Host-job env (run only when Host pulled kind=path_b thin-v1):
   HM_JOB_KIND            Must be path_b (lease_stop is not this entrypoint)
   HM_SUITE_ID            thin-v1 (empty → thin-v1)
   HM_CATALOG_ID          llama-3.1-8b-q4
-  HM_DEVICE_ID           Agent identity
+  HM_DEVICE_ID           Ignored unless it is the enrolled known host.
+                         It does not start a soak by itself.
   HM_CLASS_ID            fyber-agx-orin-64gb
   HM_IMAGE_DIGEST        Optional OCI pin (repo@digest)
   HM_MODELS_DIR          Local GGUF cache
@@ -50,7 +52,7 @@ Host-job env (run only when Host pulled kind=path_b thin-v1):
 Exit codes:
   0  scorecard written; Path B green (or --stub without --require-path-b)
   2  measured / written but Path B enroll rules red
-  3  setup / disk / pin / wrong job kind
+  3  setup / disk / pin / wrong job kind / AGX preflight failed
   4  skipped (no validation window / preempt denied)
 
 Disk: refuse if models volume free < pin size_bytes + 2 GiB headroom.
@@ -106,6 +108,11 @@ if [[ "$STUB" -ne 1 && "$NO_NVP" -ne 1 ]]; then
       sudo nvpmodel -m 2 || echo "warning: sudo nvpmodel -m 2 failed" >&2
     fi
   fi
+fi
+
+# Real soaks fail closed before the driver. --stub does not start a bench.
+if [[ "$STUB" -ne 1 ]]; then
+  "$PYTHON" "$ROOT/harness/agx_preflight.py" || exit 3
 fi
 
 exec "$PYTHON" "$ROOT/harness/phase1_soak.py" "${FORWARD[@]}"
