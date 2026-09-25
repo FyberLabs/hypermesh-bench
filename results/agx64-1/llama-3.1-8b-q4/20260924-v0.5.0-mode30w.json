@@ -1,0 +1,327 @@
+{
+  "schema": "hypermesh-bench/decode-bench/v1",
+  "device": {
+    "id": "AGX64-1",
+    "hostname": "agx64-1",
+    "hardware": "NVIDIA Jetson AGX Orin 64GB (Developer Kit, tegra234)",
+    "l4t_release": "# R39 (release), REVISION: 2.1, GCID: 46758480, BOARD: generic, EABI: aarch64, DATE: Fri Aug  7 05:54:22 AM UTC 2026",
+    "l4t_release_file": "# R39 (release), REVISION: 2.1, GCID: 46758480, BOARD: generic, EABI: aarch64, DATE: Fri Aug  7 05:54:22 AM UTC 2026\n# KERNEL_VARIANT: oot\nTARGET_USERSPACE_LIB_DIR=nvidia\nTARGET_USERSPACE_LIB_DIR_PATH=usr/lib/aarch64-linux-gnu/nvidia",
+    "kernel": "Linux agx64-1 6.8.12-1021-tegra #1 SMP PREEMPT Thu Aug  6 21:56:04 PDT 2026 aarch64 aarch64 aarch64 GNU/Linux",
+    "nvpmodel_q_before": "NV Power Mode: MODE_30W\n2",
+    "nvpmodel_q_after": "NV Power Mode: MODE_30W\n2",
+    "power_mode": "MODE_30W",
+    "power_mode_id": 2,
+    "jetson_clocks_show": "SOC family:tegra234  Machine:NVIDIA Jetson AGX Orin Developer Kit\nOnline CPUs: 0-7, Offline CPUs: 8-11\ncpu0:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1651200 IdleStates: WFI=1 c7=1 \ncpu1:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1190400 IdleStates: WFI=1 c7=1 \ncpu2:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=729600 IdleStates: WFI=1 c7=1 \ncpu3:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1497600 IdleStates: WFI=1 c7=1 \ncpu4:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1497600 IdleStates: WFI=1 c7=1 \ncpu5:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=729600 IdleStates: WFI=1 c7=1 \ncpu6:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1267200 IdleStates: WFI=1 c7=1 \ncpu7:  Governor=schedutil MinFreq=729600 MaxFreq=1728000 CurrentFreq=1497600 IdleStates: WFI=1 c7=1 \nGPU MinFreq=306000000 MaxFreq=612000000 CurrentFreq=306000000\nActive GPU TPCs: 4\nEMC MinFreq=204000000 MaxFreq=3199000000 CurrentFreq=2133000000\nDLA0_CORE:   Online=1 MinFreq=0 MaxFreq=1369600000 CurrentFreq=1369600000\nDLA0_FALCON: Online=1 MinFreq=0 MaxFreq=729600000 CurrentFreq=729600000\nDLA1_CORE:   Online=1 MinFreq=0 MaxFreq=1369600000 CurrentFreq=1369600000\nDLA1_FALCON: Online=1 MinFreq=0 MaxFreq=729600000 CurrentFreq=729600000\nPVA0_VPS0: Online=1 MinFreq=0 MaxFreq=512000000 CurrentFreq=512000000\nPVA0_AXI:  Online=1 MinFreq=0 MaxFreq=358400000 CurrentFreq=358400000\nFAN Dynamic Speed Control=nvfancontrol hwmon0_pwm1=62\nFAN Dynamic Speed Control=nvfancontrol hwmon0_pwm1_enable=1\nNV Power Mode: MODE_30W",
+    "jetson_clocks_applied": false,
+    "notes": "nvpmodel and jetson_clocks were not changed; bench ran at the mode leases run in. GPU max 612 MHz, 4 active TPCs, 8 CPUs online under MODE_30W."
+  },
+  "catalog_id": "llama-3.1-8b-q4",
+  "model": {
+    "file_host": "/home/chris/hypermesh/workload/model.gguf",
+    "file_container": "/models/model.gguf",
+    "name": "Meta-Llama-3.1-8B-Instruct-Q4_K_M",
+    "sha256": "7b064f5842bf9532c91456deda288a1b672397a54fa729aa665952863033557c",
+    "size_bytes": 4920739232,
+    "server_meta": {
+      "vocab_type": 2,
+      "n_vocab": 128256,
+      "n_ctx": 16384,
+      "n_ctx_train": 131072,
+      "n_embd": 4096,
+      "n_params": 8030261312,
+      "size": 4912898304,
+      "ftype": "Q4_K - Medium"
+    }
+  },
+  "image": {
+    "ref": "ghcr.io/fyberlabs/hypermesh-test@sha256:2d55427abb5fa0c5013985a7ef27a8821ae9046df165603219187c81923b2674",
+    "local_tag": "ghcr.io/fyberlabs/hypermesh-test:llama-v0.5.0",
+    "digest": "sha256:2d55427abb5fa0c5013985a7ef27a8821ae9046df165603219187c81923b2674",
+    "docker_image_inspect": "sha256:2d55427abb5fa0c5013985a7ef27a8821ae9046df165603219187c81923b2674 [\"ghcr.io/fyberlabs/hypermesh-test@sha256:2d55427abb5fa0c5013985a7ef27a8821ae9046df165603219187c81923b2674\"]",
+    "control_plane_image_digest_pinned": true
+  },
+  "llama_cpp": {
+    "llama_server_version": [
+      "version: 0.5.0 (build 1, commit 7fe450e)",
+      "built with GNU 13.3.0 for Linux aarch64"
+    ],
+    "version": "0.5.0",
+    "commit": "7fe450e",
+    "llama_bench_available": false
+  },
+  "lease_config_reference": {
+    "source": "https://github.com/FyberLabs/hypermesh-host/pull/34",
+    "env": {
+      "LLAMA_ARG_JINJA": "1",
+      "LLAMA_ARG_CTX_SIZE": "16384",
+      "LLAMA_ARG_TIMEOUT": "1800"
+    },
+    "entrypoint_override": "/bin/sh -c 'exec llama-server -m /models/model.gguf --host <host> --port <port> --alias <catalog_id>'",
+    "runtime": "nvidia",
+    "differences_from_lease": [
+      "listen 127.0.0.1:18080 instead of 0.0.0.0:8080 (probe bound to localhost only)",
+      "container name hm-bench-probe",
+      "no lease/agent involvement"
+    ],
+    "gpu_offload": "image default (no -ngl / --n-gpu-layers flag passed, same as lease). Server log at default verbosity does not print per-layer offload lines; ~250 tok/s prompt processing is consistent with GPU (CUDA) execution."
+  },
+  "timestamp": {
+    "start_iso": "2026-09-24T23:58:30-04:00",
+    "start_et": "2026-09-24 23:58:30 EDT",
+    "end_iso": "2026-09-25T00:03:11-04:00"
+  },
+  "commands": {
+    "docker_run": "docker run -d --name hm-bench-probe --runtime nvidia --network host -v /home/chris/hypermesh/workload/model.gguf:/models/model.gguf:ro -e LLAMA_ARG_JINJA=1 -e LLAMA_ARG_CTX_SIZE=16384 -e LLAMA_ARG_TIMEOUT=1800 --entrypoint /bin/sh ghcr.io/fyberlabs/hypermesh-test@sha256:2d55427abb5fa0c5013985a7ef27a8821ae9046df165603219187c81923b2674 -c 'exec llama-server -m /models/model.gguf --host 127.0.0.1 --port 18080 --alias llama-3.1-8b-q4'",
+    "container_id": "ec0cf4533147bab2b5fa3dd0dd4ffa89074d5c3c584846f07715b7a9a3b10c55",
+    "health_wait": "poll curl -s http://127.0.0.1:18080/health until {\"status\":\"ok\"} (healthy after ~8s)",
+    "version": "docker run --rm --runtime nvidia --entrypoint /bin/sh <image> -c \"llama-server --version\"",
+    "bench_client": "python3 bench/bench.py 7 (POST http://127.0.0.1:18080/completion)",
+    "cleanup": "docker rm -f hm-bench-probe",
+    "model_hash": "sha256sum /home/chris/hypermesh/workload/model.gguf",
+    "driver_script": "bench/bench.sh"
+  },
+  "server_props": {
+    "total_slots": 4,
+    "n_ctx": 16384,
+    "model_alias": "llama-3.1-8b-q4",
+    "model_ftype": "Q4_K - Medium",
+    "build_info": "b1-7fe450e"
+  },
+  "prompt": {
+    "text": "Summarize the following technical notes and then continue writing a detailed engineering report.\n\nNote 1. The Jetson AGX Orin is an embedded computing module designed for robotics, edge inference and autonomous machines. It combines an Ampere architecture GPU with Arm Cortex-A78AE CPU cores, dedicated deep learning accelerators, and a large pool of unified LPDDR5 memory shared between the CPU and GPU. Engineers deploying language models on such hardware must balance power budgets, thermal limits, memory bandwidth, and latency requirements. Quantized weights reduce memory traffic, which is usually the bottleneck during token generation, while prompt processing is more compute bound and benefits from batching many tokens at once. \nNote 2. The Jetson AGX Orin is an embedded computing module designed for robotics, edge inference and autonomous machines. It combines an Ampere architecture GPU with Arm Cortex-A78AE CPU cores, dedicated deep learning accelerators, and a large pool of unified LPDDR5 memory shared between the CPU and GPU. Engineers deploying language models on such hardware must balance power budgets, thermal limits, memory bandwidth, and latency requirements. Quantized weights reduce memory traffic, which is usually the bottleneck during token generation, while prompt processing is more compute bound and benefits from batching many tokens at once. \nNote 3. The Jetson AGX Orin is an embedded computing module designed for robotics, edge inference and autonomous machines. It combines an Ampere architecture GPU with Arm Cortex-A78AE CPU cores, dedicated deep learning accelerators, and a large pool of unified LPDDR5 memory shared between the CPU and GPU. Engineers deploying language models on such hardware must balance power budgets, thermal limits, memory bandwidth, and latency requirements. Quantized weights reduce memory traffic, which is usually the bottleneck during token generation, while prompt processing is more compute bound and benefits from batching many tokens at once. \nNote 4. The Jetson AGX Orin is an embedded computing module designed for robotics, edge inference and autonomous machines. It combines an Ampere architecture GPU with Arm Cortex-A78AE CPU cores, dedicated deep learning accelerators, and a large pool of unified LPDDR5 memory shared between the CPU and GPU. Engineers deploying language models on such hardware must balance power budgets, thermal limits, memory bandwidth, and latency requirements. Quantized weights reduce memory traffic, which is usually the bottleneck during token generation, while prompt processing is more compute bound and benefits from batching many tokens at once. \nNote 5. The Jetson AGX Orin is an embedded computing",
+    "sha256_utf8": "3a120c87f20df08ee944de64d1a48a8fb9ec11cdd83443a4144cbe288a4fb776",
+    "tokens_excluding_bos": 511,
+    "prompt_n_reported": 512,
+    "construction": "12 repeated technical paragraphs tokenized with the model tokenizer via /tokenize, truncated to the first 511 tokens and detokenized via /detokenize; server adds BOS so prompt_n=512. See bench/bench.py."
+  },
+  "request": {
+    "endpoint": "/completion",
+    "body_excluding_prompt": {
+      "n_predict": 256,
+      "temperature": 0,
+      "cache_prompt": false,
+      "ignore_eos": true,
+      "seed": 42,
+      "stream": false
+    },
+    "warmup_runs": 1,
+    "measured_runs": 7
+  },
+  "warmup": {
+    "timings": {
+      "cache_n": 0,
+      "prompt_n": 512,
+      "prompt_ms": 2243.408,
+      "prompt_per_token_ms": 4.38165625,
+      "prompt_per_second": 228.22420175019437,
+      "predicted_n": 256,
+      "predicted_ms": 30731.634,
+      "predicted_per_token_ms": 120.51621176470587,
+      "predicted_per_second": 8.297638843414575
+    },
+    "tokens_predicted": 256
+  },
+  "runs": [
+    {
+      "run": 1,
+      "wall_s": 32.865,
+      "prompt_n": 512,
+      "prompt_ms": 2041.478,
+      "prompt_per_second": 250.79868605000885,
+      "predicted_n": 256,
+      "predicted_ms": 30818.665,
+      "predicted_per_second": 8.274206556319035,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2041.478,
+        "prompt_per_token_ms": 3.98726171875,
+        "prompt_per_second": 250.79868605000885,
+        "predicted_n": 256,
+        "predicted_ms": 30818.665,
+        "predicted_per_token_ms": 120.85750980392157,
+        "predicted_per_second": 8.274206556319035
+      }
+    },
+    {
+      "run": 2,
+      "wall_s": 32.735,
+      "prompt_n": 512,
+      "prompt_ms": 2042.78,
+      "prompt_per_second": 250.63883531266217,
+      "predicted_n": 256,
+      "predicted_ms": 30686.921,
+      "predicted_per_second": 8.309729086212332,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2042.78,
+        "prompt_per_token_ms": 3.9898046875,
+        "prompt_per_second": 250.63883531266217,
+        "predicted_n": 256,
+        "predicted_ms": 30686.921,
+        "predicted_per_token_ms": 120.34086666666666,
+        "predicted_per_second": 8.309729086212332
+      }
+    },
+    {
+      "run": 3,
+      "wall_s": 32.845,
+      "prompt_n": 512,
+      "prompt_ms": 2041.943,
+      "prompt_per_second": 250.74157309973882,
+      "predicted_n": 256,
+      "predicted_ms": 30798.007,
+      "predicted_per_second": 8.279756543986759,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2041.943,
+        "prompt_per_token_ms": 3.988169921875,
+        "prompt_per_second": 250.74157309973882,
+        "predicted_n": 256,
+        "predicted_ms": 30798.007,
+        "predicted_per_token_ms": 120.7764980392157,
+        "predicted_per_second": 8.279756543986759
+      }
+    },
+    {
+      "run": 4,
+      "wall_s": 33.113,
+      "prompt_n": 512,
+      "prompt_ms": 2052.117,
+      "prompt_per_second": 249.49844477678414,
+      "predicted_n": 256,
+      "predicted_ms": 31055.251,
+      "predicted_per_second": 8.211171759648634,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2052.117,
+        "prompt_per_token_ms": 4.008041015625,
+        "prompt_per_second": 249.49844477678414,
+        "predicted_n": 256,
+        "predicted_ms": 31055.251,
+        "predicted_per_token_ms": 121.78529803921569,
+        "predicted_per_second": 8.211171759648634
+      }
+    },
+    {
+      "run": 5,
+      "wall_s": 32.962,
+      "prompt_n": 512,
+      "prompt_ms": 2049.719,
+      "prompt_per_second": 249.79033711450202,
+      "predicted_n": 256,
+      "predicted_ms": 30906.381,
+      "predicted_per_second": 8.250723370038052,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2049.719,
+        "prompt_per_token_ms": 4.003357421875,
+        "prompt_per_second": 249.79033711450202,
+        "predicted_n": 256,
+        "predicted_ms": 30906.381,
+        "predicted_per_token_ms": 121.20149411764706,
+        "predicted_per_second": 8.250723370038052
+      }
+    },
+    {
+      "run": 6,
+      "wall_s": 32.76,
+      "prompt_n": 512,
+      "prompt_ms": 2051.951,
+      "prompt_per_second": 249.51862885614716,
+      "predicted_n": 256,
+      "predicted_ms": 30702.809,
+      "predicted_per_second": 8.305428991855436,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2051.951,
+        "prompt_per_token_ms": 4.007716796875,
+        "prompt_per_second": 249.51862885614716,
+        "predicted_n": 256,
+        "predicted_ms": 30702.809,
+        "predicted_per_token_ms": 120.40317254901962,
+        "predicted_per_second": 8.305428991855436
+      }
+    },
+    {
+      "run": 7,
+      "wall_s": 32.876,
+      "prompt_n": 512,
+      "prompt_ms": 2047.331,
+      "prompt_per_second": 250.081691724494,
+      "predicted_n": 256,
+      "predicted_ms": 30822.759,
+      "predicted_per_second": 8.273107543682253,
+      "tokens_predicted": 256,
+      "stop_type": "limit",
+      "content_sha256": "92a02590f1d49a5dcd78b15e487bdae85adc89dec418e6edd943c50ae3cb3828",
+      "raw_timings": {
+        "cache_n": 0,
+        "prompt_n": 512,
+        "prompt_ms": 2047.331,
+        "prompt_per_token_ms": 3.998693359375,
+        "prompt_per_second": 250.081691724494,
+        "predicted_n": 256,
+        "predicted_ms": 30822.759,
+        "predicted_per_token_ms": 120.87356470588234,
+        "predicted_per_second": 8.273107543682253
+      }
+    }
+  ],
+  "summary": {
+    "n_runs": 7,
+    "decode_tok_s_median": 8.274,
+    "decode_tok_s_min": 8.211,
+    "decode_tok_s_max": 8.31,
+    "decode_tok_s_mean": 8.272,
+    "prompt_tok_s_median": 250.082,
+    "prompt_tok_s_min": 249.498,
+    "prompt_tok_s_max": 250.799,
+    "prompt_n": [
+      512
+    ],
+    "predicted_n": [
+      256
+    ],
+    "outputs_identical": true
+  },
+  "headline": {
+    "decode_tok_s_median": 8.274,
+    "decode_tok_s_min": 8.211,
+    "decode_tok_s_max": 8.31,
+    "prompt_tok_s_median": 250.082,
+    "prompt_tokens": 512,
+    "output_tokens": 256,
+    "power_mode": "MODE_30W",
+    "source": "llama-server timings.predicted_per_second (primary; matches lease path)"
+  },
+  "safety": {
+    "docker_ps_before": "no containers running",
+    "docker_ps_after": "CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES",
+    "probe_container_removed": true,
+    "leases_affected": false
+  }
+}
