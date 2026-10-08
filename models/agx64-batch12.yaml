@@ -9,7 +9,7 @@ default_ctx: 4096
 default_quant: Q4_K_M
 power_profile: "30W"
 nvpmodel_id: 2
-# Phase 1 unblocks Path B on this row only.
+# Phase 1 unblocks certification on this row only.
 first_model_id: llama-3.1-8b-q4
 notes: >
   Usable RAM on Orin UMA is the limiter. Fit ≠ file size < 64 GiB.

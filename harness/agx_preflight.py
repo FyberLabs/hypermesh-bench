@@ -13,7 +13,7 @@ Sources:
   infra docs/cottage-hypermesh-public-network.md (JP 7.2.1 / L4T R39.2.1)
 
 TensorRT is not required. llama.cpp CUDA decode does not need it.
-Kernel WireGuard is not required (cottage Path B uses wireguard-go;
+Kernel WireGuard is not required (the cottage host WireGuard join uses wireguard-go;
 CONFIG_WIREGUARD stays unset). ``jetson_clocks --show`` must say the
 clocks are not running. A clock dump that does not say that fails closed
 instead of counting as off.

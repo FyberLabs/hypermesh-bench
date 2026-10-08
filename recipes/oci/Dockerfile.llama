@@ -46,7 +46,7 @@ COPY recipes/oci/bin-placeholder /opt/hypermesh/bin/.keep
 VOLUME ["/models", "/out"]
 ENV LLAMA_BIN_DIR=/opt/hypermesh/bin
 ENV HYPERMESH_OUT=/out
-# Soak / Host path_b should set REQUIRE_BENCH=1.
+# Soak / Host lab soak jobs should set REQUIRE_BENCH=1.
 ENV REQUIRE_BENCH=0
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["llama-bench"]

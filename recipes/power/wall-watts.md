@@ -1,6 +1,6 @@
 # Wall watts procedure
 
-Path B records **wall** watts idle and load (`power_thermals.wall_watts_idle`, `wall_watts_load`). Tokens/kWh waits until soak tokens and wall energy both exist.
+Host certification records **wall** watts idle and load (`power_thermals.wall_watts_idle`, `wall_watts_load`). Tokens/kWh waits until soak tokens and wall energy both exist.
 
 `tegrastats` / INA rails are a **board proxy**. They are useful for throttle and junction, not a substitute for wall watts. Always label `method`.
 
@@ -13,7 +13,7 @@ Path B records **wall** watts idle and load (`power_thermals.wall_watts_idle`, `
 5. Write `power.json` with `method: wall_meter`, meter model, and the two medians.
 6. Do not copy a NVIDIA module TDP or nvpmodel cap into these fields.
 
-## Acceptable proxy (ops only, not a Path B pass)
+## Acceptable proxy (ops only, not a certification pass)
 
 If no wall meter is on the bench:
 

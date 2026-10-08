@@ -1,8 +1,8 @@
-# Path B scorecard
+# Certification scorecard
 
-Source of truth for fields: Hypermesh [`host-scorecard.md`](https://github.com/FyberLabs/hypermesh-docs/blob/main/host-scorecard.md). Machine schema: [`schemas/scorecard.schema.json`](../schemas/scorecard.schema.json). Schema id: `hypermesh.path_b.scorecard.v0`.
+Source of truth for fields: Hypermesh [`host-scorecard.md`](https://github.com/FyberLabs/hypermesh-docs/blob/main/host-scorecard.md). Machine schema: [`schemas/scorecard.schema.json`](../schemas/scorecard.schema.json). Schema id: `hypermesh.path_b.scorecard.v0` (the next version will be `hypermesh.bench.scorecard.v1`, with `reliability.path_b` renamed `reliability.certification`).
 
-Empty required enroll fields fail Path B. **Unmeasured metrics stay `null`.** Do not invent tok/s. Do not write TOPS as tok/s. Peak alone fails; sustained band after the box is hot is the pass.
+Empty required enroll fields fail certification. **Unmeasured metrics stay `null`.** Do not invent tok/s. Do not write TOPS as tok/s. Peak alone fails; sustained band after the box is hot is the pass.
 
 ## Shape
 
@@ -110,7 +110,7 @@ Empty required enroll fields fail Path B. **Unmeasured metrics stay `null`.** Do
 
 ## Pass / fail (`thin-v1`, proposed)
 
-1. Non-empty `image_hash` on a Path B result (empty fails — no fake hash).
+1. Non-empty `image_hash` on a certification result (empty fails — no fake hash).
 2. Artifact loads without OOM; no swap thrash during the decode window.
 3. Sustained batch-1 decode and TTFT recorded **after** the hot window (default 600s).
 4. Peak-only submission → **fail**.
@@ -118,7 +118,7 @@ Empty required enroll fields fail Path B. **Unmeasured metrics stay `null`.** Do
 6. Power mode and image digest recorded; same artifact on two images = two products.
 7. **No tok/s threshold is invented here.** Thresholds come from the first Fyber AGX soak envelope, then freeze.
 
-`python3 harness/check_scorecard.py FILE` checks schema. Add `--path-b` for the enroll rules above. Phase 0 stubs are schema-valid with `passed: null`.
+`python3 harness/check_scorecard.py FILE` checks schema. Add `--path-b` (to be renamed `--certification`) for the enroll rules above. Phase 0 stubs are schema-valid with `passed: null`.
 
 ## AGX notes
 

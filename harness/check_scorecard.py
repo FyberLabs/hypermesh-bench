@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate a Path B scorecard against the JSON Schema.
+"""Validate a certification scorecard against the JSON Schema.
 
 Default: schema only (Phase 0 null scorecards must pass).
 --path-b: enroll rules from docs/SCORECARD.md (empty image_hash fails, etc.).
@@ -38,7 +38,7 @@ def _nonempty_str(value: Any) -> bool:
 
 
 def validate_path_b(scorecard: dict[str, Any]) -> list[str]:
-    """Enroll / Path B rules. Does not invent a tok/s threshold."""
+    """Enroll / certification rules. Does not invent a tok/s threshold."""
     errors: list[str] = []
     identity = scorecard.get("identity") or {}
     inference = scorecard.get("inference_sustained") or {}

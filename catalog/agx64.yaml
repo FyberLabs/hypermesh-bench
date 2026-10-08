@@ -34,7 +34,7 @@ notes: >
   Same artifact on two images is two products.
 
 rows:
-  # --- proposed first row: Path B / Full Model unblock ---
+  # --- proposed first row: certification / Full Model unblock ---
   - catalog_id: llama-3.1-8b-q4
     status: soak_pending
     visibility: private

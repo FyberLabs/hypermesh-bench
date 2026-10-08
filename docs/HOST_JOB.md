@@ -1,6 +1,6 @@
 # Host job → Phase 1 soak entrypoint
 
-How the Hypermesh **host agent** maps an existing `kind=path_b` job onto this repo’s automated soak. Bench **emits files**. Host **owns the job-result POST**. The **plane** owns the certification window. This document names the signed-off override routes so operators know who does what — it does not add those calls to the soak script.
+How the Hypermesh **host agent** maps an existing lab soak job (`kind=path_b`; the kind will be renamed `lab_soak`) onto this repo’s automated soak. Bench **emits files**. Host **owns the job-result POST**. The **plane** owns the certification window. This document names the signed-off override routes so operators know who does what — it does not add those calls to the soak script.
 
 ## Product lock
 
@@ -23,7 +23,7 @@ This repo’s entrypoint **only runs when Host pulls `kind=path_b` / `suite_id=t
 CP  — existing GET /api/v1/hypermesh/agent/jobs
       kind=path_b  suite_id=thin-v1 (empty → thin-v1)
       catalog_id=llama-3.1-8b-q4  device_id=<AGX64-1>
-Host — invoke only for this pulled path_b (not chat / not this script POSTing lease_stop):
+Host — invoke only for this pulled lab soak job (not chat / not this script POSTing lease_stop):
 
         ./scripts/phase1_soak.sh \
           --model-id llama-3.1-8b-q4 \
@@ -52,7 +52,7 @@ Job fields Host already has (`hypermesh-host` `api.Job`): `job_id`, `kind`, `dev
 
 Result body Host already POSTs (`api.JobResultRequest`): **`passed`**, optional **`image_hash`**. `emit_job_result.py` writes those two fields first. Extra keys on `job_result.json` (`raw_refs`, `scorecard`, …) are for the agent on disk; Go unmarshal ignores unknowns. Do not invent a second URL or a dashboard curl.
 
-`image_hash` is only written when measured (`repo@digest` from `docker inspect`, or a job pin that is already `repo@digest`). Loader `gguf` leaves it null here; Host may fill the telem / host hash it already uses for Path B. Do not mint a hash from L4T text. Catalog GGUF `artifact_hash` is not the job-result `image_hash`.
+`image_hash` is only written when measured (`repo@digest` from `docker inspect`, or a job pin that is already `repo@digest`). Loader `gguf` leaves it null here; Host may fill the telem / host hash it already uses for certification. Do not mint a hash from L4T text. Catalog GGUF `artifact_hash` is not the job-result `image_hash`.
 
 ## Validation override (plane creates the window; bench consumes `path_b`)
 
@@ -112,7 +112,7 @@ Until the override is deployed: same entrypoint on an idle host. Keep `out/` if 
 | Code | Meaning |
 |---|---|
 | 0 | Scorecard written and `--path-b` green |
-| 2 | Bundle written; Path B enroll rules red (`passed=false`) |
+| 2 | Bundle written; certification rules red (`passed=false`) |
 | 3 | Setup / disk / pin / wrong kind — do not claim a soak |
 | 4 | Skip — no validation window |
 

@@ -1,6 +1,6 @@
 # hypermesh-bench
 
-Path B model/harness soak for Hypermesh certified hosts.
+Model and harness soak for Hypermesh host certification.
 
 **AGX first.** This repo is the public pull-and-run layout for NVIDIA Jetson AGX Orin 64GB (`class_id: fyber-agx-orin-64gb`). Other classes wait until this box has a real soak.
 
@@ -8,7 +8,7 @@ Harness scripts are Apache-2.0. Model weights stay under their upstream licenses
 
 ## What this is
 
-Hypermesh Path B certifies a **host class + image + artifact + sustained envelope**, not TOPS.
+Hypermesh host certification covers a **host class + image + artifact + sustained envelope**, not TOPS.
 
 - Peak bench alone fails. The pass is a sustained band after the box is hot.
 - Loaders: `oci` | `gguf`. Default backend: `cuda-jetson` (alias `cuda-sm87`).
@@ -26,7 +26,7 @@ Hypermesh Path B certifies a **host class + image + artifact + sustained envelop
 
 The site must not sell a `catalog_id` until `status=certified` with a measured envelope and hashes. `llama-3.1-8b-q4` is `soak_pending`. Every other batch-12 id is `candidate`. See [catalog/README.md](catalog/README.md).
 
-Host soak steps for AGX64-1: **[docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md)**. Automated entrypoint: `./scripts/phase1_soak.sh`. Host `path_b` mapping: **[docs/HOST_JOB.md](docs/HOST_JOB.md)**.
+Host soak steps for AGX64-1: **[docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md)**. Automated entrypoint: `./scripts/phase1_soak.sh`. Host lab soak job mapping (job kind `path_b` today): **[docs/HOST_JOB.md](docs/HOST_JOB.md)**.
 
 ## Numbers policy
 
@@ -43,7 +43,7 @@ The JetPack/L4T version recorded on the Fyber AGX is the only soak source of tru
 | **0** | Layout, schema, thin-v1 pack, batch-12 manifest, recipe stubs |
 | **1** (this) | Pins + catalog + **Host-job-shaped soak entrypoint** for Llama 3.1 8B Q4_K_M — [docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md) |
 | **2** | Run the 12-model batch at 30W; promote catalog rows only after soak |
-| **3** | Optional serving / quality sidecars (not Path B pass/fail) |
+| **3** | Optional serving / quality sidecars (not certification pass/fail) |
 | **4** | Per-host store + portal dashboards (see [docs/DASHBOARDS.md](docs/DASHBOARDS.md)) |
 
 Harness scripts still emit valid scorecards with null metrics until AGX64-1 measures them. No GPU CI. No measured envelope.
@@ -139,7 +139,7 @@ docker run --rm --runtime=nvidia --network host \
 ```
 catalog/                # Product-2 sellable subset (after soak) — see catalog/README.md
 packs/thin-v1/          # prompt pack + suite (512/2048 prefill, 128 gen, 30W)
-schemas/                # Path B scorecard JSON Schema
+schemas/                # Certification scorecard JSON Schema
 models/                 # AGX batch-12 bench matrix (pinned sha256)
 recipes/gguf/           # pull (accepts --model-id / --sha256) + sm_87 llama.cpp build
 recipes/oci/            # Dockerfile + entrypoint + ghcr push
@@ -149,7 +149,7 @@ scripts/phase1_soak.sh  # Host-job-shaped CLI wrapper
 out/                    # gitignored results — soaks and crawl ledger (CRAWL_BENCH.md)
 docs/SCORECARD.md       # field SoT
 docs/PHASE1_SOAK.md     # automated entrypoint + manual appendix
-docs/HOST_JOB.md        # path_b → entrypoint; validation override consume-only
+docs/HOST_JOB.md        # lab soak job → entrypoint; validation override consume-only
 docs/CRAWL_BENCH.md     # new GGUF crawl → fit → run_one
 docs/DASHBOARDS.md      # per-host / class UI notes (not this repo's job)
 ```
@@ -160,7 +160,7 @@ See [docs/SCORECARD.md](docs/SCORECARD.md). Schema: [schemas/scorecard.schema.js
 
 Null-allowed metrics include `usable_ram_gib`, `ttft_ms_p50_after_throttle`, `decode_tok_s_p50_after_throttle`, `wall_watts_idle`, `wall_watts_load`, `image_hash`, `artifact_hash`, `power_mode`, `nvpmodel_id`, `device_id`, `class_id`, `catalog_id`, `harness.name` / `harness.version`, and `passed`.
 
-`check_scorecard.py` validates shape. `--path-b` applies enroll rules (non-empty `image_hash`, no peak-only pass, unexpected reboot fails). Stubs are schema-valid and **not** Path B green. `check_catalog.py` refuses TBD pins and a listed/certified catalog row without a measured envelope.
+`check_scorecard.py` validates shape. `--path-b` applies the certification rules (non-empty `image_hash`, no peak-only pass, unexpected reboot fails); the flag will be renamed `--certification`. Stubs are schema-valid and **not** certification green. `check_catalog.py` refuses TBD pins and a listed/certified catalog row without a measured envelope.
 
 ## SoT (do not contradict)
 

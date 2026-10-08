@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Map llama-bench JSON onto Path B scorecard fields.
+"""Map llama-bench JSON onto certification scorecard fields.
 
 If raw output is missing or a not_run stub, every measured field stays
 null. Do not invent tok/s. Do not copy third-party rates.
@@ -180,7 +180,7 @@ def map_llama_bench(raw: Any) -> dict[str, Any]:
 
     pp* / n_prompt→prefill_tok_s_p50. tg* / n_gen→cold decode (peak only).
     after_throttle fields stay null until apply_hot() sees ttft_hot.json.
-    Peak-only is not a Path B pass.
+    Peak-only is not a certification pass.
     """
     mapped = {
         "prefill_tok_s_p50": None,

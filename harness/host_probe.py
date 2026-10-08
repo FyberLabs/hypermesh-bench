@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Probe JetPack/L4T host facts for a Path B scorecard.
+"""Probe JetPack/L4T host facts for a certification scorecard.
 
 The CLI runs AGX preflight and requires the enrolled known host. A failure
 exits 3 and does not write a null probe. ``collect`` still returns nulls for

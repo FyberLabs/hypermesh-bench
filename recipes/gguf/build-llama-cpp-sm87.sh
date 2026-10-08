@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SRC_DIR="${LLAMA_CPP_SRC:-$ROOT/.cache/llama.cpp}"
 BUILD_DIR="${LLAMA_CPP_BUILD:-$SRC_DIR/build-sm87}"
 REPO_URL="${LLAMA_CPP_REPO:-https://github.com/ggml-org/llama.cpp}"
-# Pin a git hash at soak time. Do not treat "latest" as a Path B identity.
+# Pin a git hash at soak time. Do not treat "latest" as a certification identity.
 REPO_REF="${LLAMA_CPP_REF:-master}"
 
 if [[ "$(uname -m)" != "aarch64" ]] && [[ "${FORCE_BUILD:-}" != "1" ]]; then
