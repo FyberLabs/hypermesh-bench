@@ -1,8 +1,8 @@
 # Host job → Phase 1 soak entrypoint
 
-How the Hypermesh **host agent** maps an existing lab soak job (`kind=path_b`; the kind will be renamed `lab_soak`) onto this repo’s automated soak. Bench **emits files**. Host **owns the job-result POST**. The **plane** owns the certification window. This document names the signed-off override routes so operators know who does what — it does not add those calls to the soak script.
+How the Hypermesh **host agent** maps an existing lab soak job (`kind=path_b`; the kind will be renamed `lab_soak`) onto this repo’s automated soak. Bench **emits files**. Host **owns the job-result POST**. The **plane** owns the certification window. This document names the approved override routes so operators know who does what — it does not add those calls to the soak script.
 
-## Product lock
+## Scope
 
 Automated **deploy + run** for AGX host certification. Not chat. Not a hand `lease_stop`.
 
@@ -50,13 +50,13 @@ Job fields Host already has (`hypermesh-host` `api.Job`): `job_id`, `kind`, `dev
 | class | `HM_CLASS_ID=fyber-agx-orin-64gb` |
 | models / out | `HM_MODELS_DIR`, `HM_OUT_DIR` |
 
-Result body Host already POSTs (`api.JobResultRequest`): **`passed`**, optional **`image_hash`**. `emit_job_result.py` writes those two fields first. Extra keys on `job_result.json` (`raw_refs`, `scorecard`, …) are for the agent on disk; Go unmarshal ignores unknowns. Do not invent a second URL or a dashboard curl.
+Result body Host already POSTs (`api.JobResultRequest`): **`passed`**, optional **`image_hash`**. `emit_job_result.py` writes those two fields first. Extra keys on `job_result.json` (`raw_refs`, `scorecard`, …) are for the agent on disk; Go unmarshal ignores unknowns. There is no second URL or dashboard curl.
 
 `image_hash` is only written when measured (`repo@digest` from `docker inspect`, or a job pin that is already `repo@digest`). Loader `gguf` leaves it null here; Host may fill the telem / host hash it already uses for certification. Do not mint a hash from L4T text. Catalog GGUF `artifact_hash` is not the job-result `image_hash`.
 
 ## Validation override (plane creates the window; bench consumes `path_b`)
 
-Product sign-off (panopticon#108): the **plane** is the door. Plane operator only — portal tenant-session JWT + marketplace `X-Tenant-ID`. Not a site `hm_site_…` token. Not `POST /jobs`. **Not** `scripts/phase1_soak.sh`.
+Per panopticon#108, the **plane** is the door. Plane operator only — portal tenant-session JWT + marketplace `X-Tenant-ID`. Not a site `hm_site_…` token. Not `POST /jobs`. **Not** `scripts/phase1_soak.sh`.
 
 Create (AGX64-1). `preempt` defaults `true` if omitted. **`suite_id` is not in the body** — the plane picks `path_b` / `thin-v1`.
 
@@ -102,7 +102,7 @@ Bench / Host consume-only:
 
 1. Host pulls `kind=path_b`, `suite_id=thin-v1` (empty suite → `thin-v1`). That is the only signal that a window is open for this entrypoint.
 2. Host runs `scripts/phase1_soak.sh`. Not chat. Not `lease_stop`. The script does not call override or `/jobs` URLs.
-3. If Host is told there is no window (`HM_VALIDATION_WINDOW=denied` / `no_hold` / `0`, or `HM_VALIDATION_DENIED=1`), exit **4**. Do not fight an active renter lease. Do not invent preempt.
+3. If Host is told there is no window (`HM_VALIDATION_WINDOW=denied` / `no_hold` / `0`, or `HM_VALIDATION_DENIED=1`), exit **4**. Do not fight an active renter lease. Preemption comes only from the plane.
 4. Host POSTs the existing job-result body `{passed, image_hash?}`. The plane advances the override and restores on its side.
 
 Until the override is deployed: same entrypoint on an idle host. Keep `out/` if the agent is not enrolled. Still no invented metrics POST. Still no hand `lease_stop`.
@@ -116,11 +116,11 @@ Until the override is deployed: same entrypoint on an idle host. Keep `out/` if 
 | 3 | Setup / disk / pin / wrong kind — do not claim a soak |
 | 4 | Skip — no validation window |
 
-Never treat exit 0 as a pass when `job_result.passed` is false. Never invent tok/s to force green.
+Never treat exit 0 as a pass when `job_result.passed` is false. Never report unmeasured tok/s to force green.
 
-## Locks
+## Constraints
 
 - JetPack / L4T on the host. Alpine-first only for containers (this CUDA runtime is L4T-based).
-- `docker run --runtime=nvidia` only. No `docker exec` stop invents.
+- `docker run --runtime=nvidia` only. No ad hoc `docker exec` stops.
 - No AImmune tokens. Soak script adds no CP endpoints and does not POST the override.
 - Do not promote `catalog/agx64.yaml` to `certified` from this job.

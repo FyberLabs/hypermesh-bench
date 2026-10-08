@@ -30,7 +30,7 @@ Host soak steps for AGX64-1: **[docs/PHASE1_SOAK.md](docs/PHASE1_SOAK.md)**. Aut
 
 ## Numbers policy
 
-**Do not invent tok/s. Do not write TOPS as tok/s.**
+**tok/s is reported only when measured. TOPS is not tok/s.**
 
 Unmeasured fields stay `null`. Third-party Jetson blog rates are other people's boxes — cite them only as citations, never copy them into `inference_sustained.*`. File sha256 pins are identity, not a speed claim.
 

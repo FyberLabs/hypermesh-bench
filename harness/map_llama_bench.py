@@ -2,7 +2,7 @@
 """Map llama-bench JSON onto certification scorecard fields.
 
 If raw output is missing or a not_run stub, every measured field stays
-null. Do not invent tok/s. Do not copy third-party rates.
+null. tok/s comes only from measured output. Third-party rates are not copied.
 
 Real llama-bench --output-format json (pp*/tg* or n_prompt/n_gen + avg_ts)
 maps to cold prefill / peak decode only. *_after_throttle stays null until

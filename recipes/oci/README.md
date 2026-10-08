@@ -22,7 +22,7 @@ L4T_BASE=nvcr.io/nvidia/l4t-cuda:<pin>-runtime \
   ./recipes/oci/build-and-push.sh
 ```
 
-Copy sm_87 binaries into the image from a native `./recipes/gguf/build-llama-cpp-sm87.sh` (or a multi-stage build on JetPack). Record `image_hash` as `repo@digest` after push — never invent a digest.
+Copy sm_87 binaries into the image from a native `./recipes/gguf/build-llama-cpp-sm87.sh` (or a multi-stage build on JetPack). Record `image_hash` as `repo@digest` after push, using the digest the registry returned.
 
 ## Run
 
@@ -36,4 +36,4 @@ docker run --rm --runtime=nvidia --network host \
     -p 512,2048 -n 128 -r 5 -ngl 99 -fa 1
 ```
 
-Never `--gpus`. Never `docker exec` as a stop invent. Entrypoint exits non-zero if the binary is missing (`REQUIRE_BENCH=1` or default llama-bench miss).
+Never `--gpus`. Never stop with `docker exec`. Entrypoint exits non-zero if the binary is missing (`REQUIRE_BENCH=1` or default llama-bench miss).

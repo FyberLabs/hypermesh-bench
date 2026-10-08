@@ -1,7 +1,7 @@
 # Product-2 catalog for AGX Orin 64GB (Full Model / loaded-model lease).
 # Rows may be offered AFTER soak, not before.
 # Bench matrix (all 12): models/agx64-batch12.yaml
-# Do not invent tok/s. Do not write TOPS as tok/s.
+# tok/s is reported only when measured. TOPS is not tok/s.
 # Third-party blog rates are other people's boxes — never copy them here.
 class_id: fyber-agx-orin-64gb
 sku: NVIDIA Jetson AGX Orin 64GB

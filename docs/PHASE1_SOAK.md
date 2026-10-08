@@ -10,7 +10,7 @@ The site must not sell `llama-3.1-8b-q4` until `catalog/agx64.yaml` says `status
 
 One command on AGX64-1 (JetPack host). **Only** Host, after it pulls `kind=path_b` / `suite_id=thin-v1`, should invoke this. Not chat. Not a hand `lease_stop`. See [HOST_JOB.md](HOST_JOB.md).
 
-**Plane door** (panopticon#108 — Product sign-off): the control plane opens the certification window. Exact Create body (plane operator, **not** this script): see [HOST_JOB.md](HOST_JOB.md). `preempt` defaults `true`; `suite_id` is not in the body (plane picks `path_b` / `thin-v1`). Host then `GET /agent/jobs` → `phase1_soak` → job result → auto-restore. No hand `lease_stop`.
+**Plane door** (panopticon#108): the control plane opens the certification window. Exact Create body (plane operator, **not** this script): see [HOST_JOB.md](HOST_JOB.md). `preempt` defaults `true`; `suite_id` is not in the body (plane picks `path_b` / `thin-v1`). Host then `GET /agent/jobs` → `phase1_soak` → job result → auto-restore. No hand `lease_stop`.
 
 A real run fails closed before llama-bench unless AGX preflight passes and `/var/lib/hypermesh/device.json` is enrolled known host AGX64-1 (`a6400000-0640-4000-8000-000000000001`). `HM_DEVICE_ID` does not skip that gate. `--stub` does not start a bench.
 
@@ -221,7 +221,7 @@ python3 harness/batch_runner.py \
 
 ### What to POST
 
-The host agent already owns the certification job. Do not invent a second channel. Do not hand-POST `lease_stop` to “make room.”
+The host agent already owns the certification job. There is no second channel. Do not hand-POST `lease_stop` to “make room.”
 
 1. Plane operator opens the window with the Create body in [HOST_JOB.md](HOST_JOB.md) (`device_id` + optional `preempt`; no `suite_id`). Plane enqueues existing `kind=path_b` / `thin-v1`.
 2. Agent pulls that job and runs `scripts/phase1_soak.sh` (or you drop the `out/` tree where the agent reads results).
@@ -234,7 +234,7 @@ After a real green soak: promote `catalog/agx64.yaml` `llama-3.1-8b-q4` from `so
 
 ## Do not
 
-- Invent tok/s, or write TOPS / nvpmodel watts as tok/s
+- Report unmeasured tok/s, or write TOPS / nvpmodel watts as tok/s
 - Copy ProventusNova / forum / Jetson AI Lab rates into the scorecard
 - Default MAXN, or mix 30W and MAXN in one envelope
 - Treat `cudaMemGetInfo` as Tegra allocator truth
@@ -243,5 +243,5 @@ After a real green soak: promote `catalog/agx64.yaml` `llama-3.1-8b-q4` from `so
 - Mark `run.passed: true` or catalog `status: certified` without `--path-b` green on this box
 - Sell or list a `catalog_id` before certified + measured envelope + hashes
 - Call `/host-certification/overrides` or hand-POST `lease_stop` / `POST /jobs` from this repo
-- Invent a second job-result POST, or `docker exec` stops
+- Add a second job-result POST, or stop with `docker exec`
 - Bake GGUF into the thin runtime image and keep a second copy under ~9.9 GiB free
