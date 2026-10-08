@@ -2,7 +2,7 @@
 
 Operator command for models that are not already in the batch-12 manifest. It does not replace the AIuditor daily crawl, and it does not enqueue `lab_pull` / `path_b`. The plane still owns certification. This command only discovers metadata, records candidates, and calls the existing `run_one` harness.
 
-No weight download. No invented tok/s. A stub scorecard is not a Path B pass.
+No weight download. No invented tok/s. A stub scorecard is not a certification pass.
 
 ## Depots
 
@@ -32,7 +32,7 @@ Rows already pinned in `models/*.yaml` or `catalog/*.yaml` are `known` and are n
 
 ## Lab nodes
 
-Stub runs still record a ready list (`lab`, `enrolled`, `path_b: green`, `schedule_hold: false`). Oldest `created_at` wins. That list does not start a real soak.
+Stub runs still record a ready list (`lab`, `enrolled`, `path_b: green` for the certification state, `schedule_hold: false`). Oldest `created_at` wins. That list does not start a real soak.
 
 `--execute` ignores `--nodes`, `HM_LAB_NODES`, `nodes/lab.yaml`, and `HM_DEVICE_ID`. The soak host is the known-host row shared with panopticon `KNOWN_HOSTS` and infra `config/hypermesh-known-hosts.yaml`:
 

@@ -1,15 +1,15 @@
 # Per-host telemetry, class aggregation, dashboards
 
-This repo **emits** Path B `scorecard.json`. It does not host graphs.
+This repo **emits** the certification `scorecard.json`. It does not host graphs.
 
-Chris requirement: record performance **per host**; aggregate among similar hardware **classes**; graphs click through to a specific run; dashboards let users pick **hosts** and **models**. Path B scorecard fields remain the metric SoT. Do not invent tok/s. First-party analytics only ([analytics.md](https://github.com/FyberLabs/hypermesh-docs/blob/main/analytics.md)).
+Requirement: record performance **per host**; aggregate among similar hardware **classes**; graphs click through to a specific run; dashboards let users pick **hosts** and **models**. Certification scorecard fields remain the metric SoT. Do not invent tok/s. First-party analytics only ([analytics.md](https://github.com/FyberLabs/hypermesh-docs/blob/main/analytics.md)).
 
 ## Ownership (do not blur)
 
 | Surface | Owner | Shows | Must not |
 |---|---|---|---|
-| Panopticon portal / ops UI | **UI Master** | Host list, Path B history, class aggregates, run detail, host×model picker for authenticated users | Second lease truth; public fake leaderboards |
-| Control plane API | Platform / CP | Persist scorecard runs, schedule Path B, emit `hypermesh.cert.path_b.*`, serve query APIs | New Kafka topic; prompt/completion logging |
+| Panopticon portal / ops UI | **UI Master** | Host list, bench run history, class aggregates, run detail, host×model picker for authenticated users | Second lease truth; public fake leaderboards |
+| Control plane API | Platform / CP | Persist scorecard runs, schedule lab soaks, emit `hypermesh.cert.path_b.*` (to be renamed `hypermesh.cert.passed.v1` / `hypermesh.cert.failed.v1`), serve query APIs | New Kafka topic; prompt/completion logging |
 | hyperme.sh | **Marketing Site** | Qualitative story; certified **only after soak**; optional sanitized class summary | Host IPs; raw dumps; third-party tok/s as ours; TOPS-as-speed |
 | Renter CLI / REST | Same REST as portal | Certified classes / catalog; lease; usage | Scraping portal HTML; SSH as the product |
 
@@ -20,7 +20,7 @@ Build graphs, run click-through, and host/model pickers in the **Panopticon port
 ```
 Host agent runs pack (thin-v1)
   → scorecard.json + raw harness files
-  → POST Path B job result
+  → POST lab soak job result
   → persist PathBRun
   → emit hypermesh.cert.path_b.passed.v1 | failed.v1
   → portal queries REST aggregates / run detail
@@ -30,7 +30,7 @@ Do not invent a second monitoring product. Azure Monitor stays for ops-plane hea
 
 ## Store grain
 
-Metrics columns are **only** Path B scorecard fields (or null until measured).
+Metrics columns are **only** certification scorecard fields (or null until measured).
 
 ### `path_b_runs` (click-through target)
 
@@ -50,20 +50,20 @@ Prefer **median-of-host-medians**. Never mix classes (NX ≠ AGX). Never mix 30W
 
 ## Query APIs (sketch)
 
-Additive under `/api/v1/hypermesh/`:
+Additive under `/api/v1/hypermesh/`. The two `path-b/runs` routes exist today and will be renamed `bench-runs`; the summary and compare routes are not built yet:
 
 | Endpoint | Returns |
 |---|---|
 | `GET …/devices/{id}/path-b/runs` | Paginated runs for one host |
 | `GET …/path-b/runs/{run_id}` | Full scorecard + raw links (ACL) |
-| `GET …/classes/{class_id}/path-b/summary` | `class_perf_agg` |
-| `GET …/path-b/compare?class_id=&catalog_id=&power_mode=` | Chart series |
+| `GET …/classes/{class_id}/bench-runs/summary` | `class_perf_agg` |
+| `GET …/bench-runs/compare?class_id=&catalog_id=&power_mode=` | Chart series |
 
 Hosts see their devices. Renters see class-level certified envelopes + listed catalog. Ops sees full run detail.
 
 ## Portal surfaces (UI Master)
 
-1. **Host picker** — class, Path B state, last green, last sustained decode/TTFT (`null` → “not soaked”).
+1. **Host picker** — class, certification state, last green, last sustained decode/TTFT (`null` → “not soaked”).
 2. **Model / catalog picker** — only measured envelopes; no “try Llama” as certified without hash + our numbers.
 3. **Graphs** — sustained decode, TTFT after throttle, class distribution, wall watts, pass/fail. Every point → run detail (`run_id`).
 4. **Layout** — class + catalog + power-mode toggle (**30W default**); aggregate strip with nulls labeled; host drill-down.
@@ -80,4 +80,4 @@ Not allowed: live multi-host ops graphs on hyperme.sh; public host picker; third
 - Prompt/completion logging “for dashboards”
 - Aggregating across different `class_id` or unlabeled power modes
 - Filling charts with TOPS-derived fake tok/s
-- Replacing Path B with a vibe benchmark in the UI
+- Replacing host certification with a vibe benchmark in the UI

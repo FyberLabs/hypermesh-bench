@@ -1,6 +1,6 @@
 # Phase 1 soak runbook — AGX64-1
 
-Host-facing steps for the first Path B / Full Model soak on **AGX64-1** (`class_id: fyber-agx-orin-64gb`). One model only: **`llama-3.1-8b-q4`**.
+Host-facing steps for the first certification / Full Model soak on **AGX64-1** (`class_id: fyber-agx-orin-64gb`). One model only: **`llama-3.1-8b-q4`**.
 
 This runbook does **not** invent numbers. Leave every measured scorecard field `null` until this box writes it. Do not write TOPS as tok/s. Third-party Jetson blog rates are other people's boxes — cite them only as citations, never copy them into `inference_sustained.*` or `catalog/agx64.yaml` scorecard fields.
 
@@ -42,7 +42,7 @@ What the driver does:
 9. Map raws → `scorecard.json`. Unmeasured = null. `check_scorecard.py` then `--path-b`. `run.passed` is that result only.
 10. `job_result.json` = `{passed, image_hash?}` for the **existing** Host POST. Bench does not POST.
 
-Exit codes: `0` Path B green (or `--stub` without `--require-path-b`); `2` Path B red; `3` setup/disk/pin; `4` skip (no validation window).
+Exit codes: `0` certification green (or `--stub` without `--require-path-b`); `2` certification red; `3` setup/disk/pin; `4` skip (no validation window).
 
 Manual steps below remain as an appendix if you need to run pieces by hand.
 
@@ -171,13 +171,15 @@ Do not promote a cold `llama-bench` tg* cell into `decode_tok_s_p50_after_thrott
 
 ## 7. `check_scorecard.py --path-b`
 
+`--path-b`, `--require-path-b` and `HM_REQUIRE_PATH_B` will be renamed `--certification`, `--require-certification` and `HM_REQUIRE_CERTIFICATION`. The old names keep working for one release after that.
+
 Schema only (null stubs must pass):
 
 ```bash
 python3 harness/check_scorecard.py "$OUT/llama-3.1-8b-q4/scorecard.json"
 ```
 
-Path B enroll rules (empty `image_hash` fails; peak-only fails; unexpected reboot fails; no invented tok/s threshold):
+Certification rules (empty `image_hash` fails; peak-only fails; unexpected reboot fails; no invented tok/s threshold):
 
 ```bash
 python3 harness/check_scorecard.py --path-b "$OUT/llama-3.1-8b-q4/scorecard.json"
@@ -185,13 +187,13 @@ python3 harness/check_scorecard.py --path-b "$OUT/llama-3.1-8b-q4/scorecard.json
 
 `--path-b` is red until this box measures hashes + sustained TTFT / decode after throttle. That is expected. Do not paste a blog rate to turn it green.
 
-## 8. File under `out/` and POST back to Path B
+## 8. File under `out/` and POST back to the plane
 
 ### Where to file (this box)
 
 ```
 out/<hostname>-<YYYYMMDD>/llama-3.1-8b-q4/
-  scorecard.json          # Path B payload
+  scorecard.json          # certification payload
   llama-bench.json
   ttft_hot.json
   mem_after_load.json
@@ -219,14 +221,14 @@ python3 harness/batch_runner.py \
 
 ### What to POST
 
-The host agent already owns Path B. Do not invent a second channel. Do not hand-POST `lease_stop` to “make room.”
+The host agent already owns the certification job. Do not invent a second channel. Do not hand-POST `lease_stop` to “make room.”
 
 1. Plane operator opens the window with the Create body in [HOST_JOB.md](HOST_JOB.md) (`device_id` + optional `preempt`; no `suite_id`). Plane enqueues existing `kind=path_b` / `thin-v1`.
 2. Agent pulls that job and runs `scripts/phase1_soak.sh` (or you drop the `out/` tree where the agent reads results).
 3. Agent **POSTs the job result on the existing job-result channel** (`{passed, image_hash?}` plus scorecard/raw refs on disk). Not a new URL. Not a homemade curl to a dashboard. Not the override URL.
 4. CP persists a `path_b_runs` row, emits `hypermesh.cert.path_b.passed.v1` or `failed.v1`, and restores the override (or `POST …/overrides/{id}/restore`).
 
-If the agent is not enrolled on AGX64-1 yet: keep the `out/` tree. Do not POST invented metrics. Empty required Path B fields fail enroll — that is correct.
+If the agent is not enrolled on AGX64-1 yet: keep the `out/` tree. Do not POST invented metrics. Empty required certification fields fail enroll — that is correct.
 
 After a real green soak: promote `catalog/agx64.yaml` `llama-3.1-8b-q4` from `soak_pending` → `certified`, copy measured envelope + hashes, set `visibility: listed`. Until that edit, the site does not sell this `catalog_id`.
 

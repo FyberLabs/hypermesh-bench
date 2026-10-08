@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build and push a thin ghcr.io/fyberlabs/hypermesh-llama runtime (no GGUF).
-# image_hash for Path B is repo@digest — print the digest, do not invent one.
+# image_hash for certification is repo@digest — print the digest, do not invent one.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -9,7 +9,7 @@ IMAGE_NAME="${IMAGE_NAME:-hypermesh-llama}"
 # Thin runtime tag. Do not bake GGUF into this default.
 TAG="${TAG:-agx64-jp-thin}"
 # Production MUST set L4T_BASE to the JetPack CUDA image on the Fyber AGX.
-# ubuntu:22.04 is reviewable off-box only — not a Path B identity.
+# ubuntu:22.04 is reviewable off-box only — not a certification identity.
 L4T_BASE="${L4T_BASE:-ubuntu:22.04}"
 
 IMAGE="$REGISTRY/$IMAGE_NAME:$TAG"

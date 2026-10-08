@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Shape a Path B JobResultBody for the Host agent to POST.
+"""Shape a lab soak JobResultBody for the Host agent to POST.
 
 Host already POSTs {passed, image_hash?} on the existing
 /api/v1/hypermesh/agent/jobs/{job_id}/result channel. This adapter
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Locked JobResultRequest fields Host POSTs for path_b (hypermesh-host).
+# JobResultRequest fields Host POSTs for the lab soak job (kind `path_b`, hypermesh-host).
 JOB_RESULT_FIELDS = ("passed", "image_hash")
 
 DEFAULT_RAW_REFS = (

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Host-job-shaped Phase 1 thin-v1 soak driver for llama-3.1-8b-q4.
 
-Host path_b entrypoint (run only after Host pulls kind=path_b thin-v1).
+Host lab soak entrypoint (run only after Host pulls kind=path_b thin-v1).
 Emits scorecard.json + job_result.json (passed, image_hash) for the
 existing job-result channel. Does not POST the plane override, lease_stop,
 or /jobs. Does not invent tok/s, watts, or hashes. Unmeasured fields stay
@@ -9,7 +9,7 @@ null.
 
 Exit codes:
   0  scorecard written; --path-b green (or stub dry-run without --require-path-b)
-  2  scorecard written; Path B enroll rules red
+  2  scorecard written; certification rules red
   3  setup / disk / pin / wrong job kind
   4  skipped (no validation window / preempt denied)
 """
@@ -487,7 +487,7 @@ def run_soak(args: argparse.Namespace) -> int:
         print("\n".join(path_b_errors), file=sys.stderr)
         return EXIT_PATH_B_FAIL
     if stub:
-        # Dry-run produced a schema-valid bundle with nulls. Not a Path B pass.
+        # Dry-run produced a schema-valid bundle with nulls. Not a certification pass.
         return EXIT_OK
     print("path-b red", file=sys.stderr)
     print("\n".join(path_b_errors), file=sys.stderr)
