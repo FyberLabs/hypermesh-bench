@@ -18,7 +18,7 @@ A Product-2 row is one artifact: file hash, quant, loader, backend, class, power
 | `certified` | Soak on this class passed. Envelope + hashes recorded. | Yes (`visibility: listed`) |
 | `rejected` | Soak failed or withdrawn. | **No** |
 
-**Rule:** the site must not sell a `catalog_id` until `status=certified` with a measured envelope and pinned hashes. `soak_pending` and `candidate` are not sellable. Do not invent tok/s. Do not write TOPS as tok/s. Third-party blog rates are not ours.
+**Rule:** the site must not sell a `catalog_id` until `status=certified` with a measured envelope and pinned hashes. `soak_pending` and `candidate` are not sellable. tok/s is reported only when measured. TOPS is not tok/s. Third-party blog rates are not ours.
 
 Scorecard fields on every row stay `null` until a Fyber AGX soak writes them. Promoting a row is a deliberate edit after [`docs/PHASE1_SOAK.md`](../docs/PHASE1_SOAK.md), not a filename change.
 

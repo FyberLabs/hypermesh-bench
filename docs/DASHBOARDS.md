@@ -2,7 +2,7 @@
 
 This repo **emits** the certification `scorecard.json`. It does not host graphs.
 
-Requirement: record performance **per host**; aggregate among similar hardware **classes**; graphs click through to a specific run; dashboards let users pick **hosts** and **models**. Certification scorecard fields remain the metric SoT. Do not invent tok/s. First-party analytics only ([analytics.md](https://github.com/FyberLabs/hypermesh-docs/blob/main/analytics.md)).
+Requirement: record performance **per host**; aggregate among similar hardware **classes**; graphs click through to a specific run; dashboards let users pick **hosts** and **models**. Certification scorecard fields remain the metric SoT. tok/s comes only from measured runs. First-party analytics only ([analytics.md](https://github.com/FyberLabs/hypermesh-docs/blob/main/analytics.md)).
 
 ## Ownership (do not blur)
 
@@ -26,7 +26,7 @@ Host agent runs pack (thin-v1)
   → portal queries REST aggregates / run detail
 ```
 
-Do not invent a second monitoring product. Azure Monitor stays for ops-plane health. Product bench metrics live on Hypermesh domain rows + those cert events.
+There is no second monitoring product. Azure Monitor stays for ops-plane health. Product bench metrics live on Hypermesh domain rows + those cert events.
 
 ## Store grain
 

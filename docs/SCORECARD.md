@@ -2,7 +2,7 @@
 
 Source of truth for fields: Hypermesh [`host-scorecard.md`](https://github.com/FyberLabs/hypermesh-docs/blob/main/host-scorecard.md). Machine schema: [`schemas/scorecard.schema.json`](../schemas/scorecard.schema.json). Schema id: `hypermesh.path_b.scorecard.v0` (the next version will be `hypermesh.bench.scorecard.v1`, with `reliability.path_b` renamed `reliability.certification`).
 
-Empty required enroll fields fail certification. **Unmeasured metrics stay `null`.** Do not invent tok/s. Do not write TOPS as tok/s. Peak alone fails; sustained band after the box is hot is the pass.
+Empty required enroll fields fail certification. **Unmeasured metrics stay `null`.** tok/s is reported only when measured. TOPS is not tok/s. Peak alone fails; sustained band after the box is hot is the pass.
 
 ## Shape
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build and push a thin ghcr.io/fyberlabs/hypermesh-llama runtime (no GGUF).
-# image_hash for certification is repo@digest — print the digest, do not invent one.
+# image_hash for certification is repo@digest — print the measured digest.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"

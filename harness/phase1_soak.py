@@ -65,7 +65,7 @@ def _env(name: str, default: str | None = None) -> str | None:
 
 
 def validation_denied() -> tuple[bool, str]:
-    """Consume-only: Host/Panopticon said no window. Do not invent a CP API."""
+    """Consume-only: Host/Panopticon said no window. No control-plane API is added."""
     denied_flag = (_env("HM_VALIDATION_DENIED") or "").lower()
     if denied_flag in TRUTHY:
         return True, "HM_VALIDATION_DENIED"

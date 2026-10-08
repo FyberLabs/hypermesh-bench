@@ -24,6 +24,6 @@ If no wall meter is on the bench:
 
 ## Do not
 
-- Invent watts from TOPS, nvpmodel name, or a blog.
+- Derive watts from TOPS, nvpmodel name, or a blog.
 - Mix 30W and MAXN in one envelope.
 - Treat `tokens_per_kwh` as known before both tokens and wall energy exist.
